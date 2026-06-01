@@ -34,6 +34,7 @@ import AppSidebar from '@/components/common/AppSidebar'
 export default function StyleLibraryPage() {
   const [styles, setStyles] = useState<Style[]>([])
   const [categories, setCategories] = useState<string[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('system')
   const [modalOpen, setModalOpen] = useState(false)
@@ -62,7 +63,11 @@ export default function StyleLibraryPage() {
     loadData()
   }, [loadData])
 
-  const filteredStyles = styles.filter((s) => s.style_type === activeTab)
+  const filteredStyles = styles
+    .filter((s) => s.style_type === activeTab)
+    .filter((s) =>
+      selectedCategory === 'all' ? true : s.category === selectedCategory
+    )
 
   const handleCreate = async (values: {
     name: string
@@ -72,9 +77,9 @@ export default function StyleLibraryPage() {
     try {
       await styleApi.create({
         name: values.name,
-        category: values.category,
-        description: values.description,
-        style_type: activeTab === 'system' ? 'custom' : activeTab,
+        category: activeTab === 'system' ? values.category : undefined,
+        description: activeTab === 'system' ? values.description : undefined,
+        style_type: 'custom',
         example_image: uploadFile || undefined,
       })
       message.success('风格创建成功')
@@ -97,8 +102,10 @@ export default function StyleLibraryPage() {
     try {
       await styleApi.update(editingStyle.uid, {
         name: values.name,
-        category: values.category,
-        description: values.description,
+        category:
+          editingStyle.style_type === 'system' ? values.category : undefined,
+        description:
+          editingStyle.style_type === 'system' ? values.description : undefined,
         example_image: uploadFile || undefined,
       })
       message.success('风格更新成功')
@@ -186,6 +193,9 @@ export default function StyleLibraryPage() {
     },
   ]
 
+  const isSystemView = activeTab === 'system'
+  const editingIsSystem = editingStyle?.style_type === 'system'
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <AppHeader />
@@ -200,25 +210,55 @@ export default function StyleLibraryPage() {
                   风格库
                 </h1>
                 <p className="text-gray-500 text-sm mt-1">
-                  管理系统预设风格和自定义风格
+                  {isSystemView
+                    ? '浏览系统预设风格，选择喜欢的复制到自定义库'
+                    : '管理你的自定义风格库'}
                 </p>
               </div>
-              <Button
-                type="primary"
-                icon={<Plus size={16} />}
-                size="large"
-                onClick={openCreateModal}
-              >
-                新建风格
-              </Button>
+              {!isSystemView && (
+                <Button
+                  type="primary"
+                  icon={<Plus size={16} />}
+                  size="large"
+                  onClick={openCreateModal}
+                >
+                  新建风格
+                </Button>
+              )}
             </div>
 
             <Tabs
               activeKey={activeTab}
-              onChange={setActiveTab}
+              onChange={(key) => {
+                setActiveTab(key)
+                setSelectedCategory('all')
+              }}
               items={tabItems}
-              className="mb-6"
+              className="mb-4"
             />
+
+            {/* 系统预设页才显示分类筛选 */}
+            {isSystemView && categories.length > 0 && (
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <Button
+                  size="small"
+                  type={selectedCategory === 'all' ? 'primary' : 'default'}
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  全部
+                </Button>
+                {categories.map((cat) => (
+                  <Button
+                    key={cat}
+                    size="small"
+                    type={selectedCategory === cat ? 'primary' : 'default'}
+                    onClick={() => setSelectedCategory(cat)}
+                  >
+                    {cat}
+                  </Button>
+                ))}
+              </div>
+            )}
 
             {isLoading ? (
               <div className="flex justify-center py-20">
@@ -227,7 +267,7 @@ export default function StyleLibraryPage() {
             ) : filteredStyles.length === 0 ? (
               <Empty
                 description={
-                  activeTab === 'system'
+                  isSystemView
                     ? '暂无系统预设风格'
                     : '还没有自定义风格，点击右上角创建'
                 }
@@ -249,10 +289,10 @@ export default function StyleLibraryPage() {
                     >
                       <StyleCard
                         style={style}
+                        isSystem={style.style_type === 'system'}
                         onEdit={() => openEditModal(style)}
                         onCopy={() => handleCopy(style)}
                         onDelete={() => handleDelete(style.uid)}
-                        canEdit={activeTab === 'custom'}
                       />
                     </motion.div>
                   ))}
@@ -265,7 +305,7 @@ export default function StyleLibraryPage() {
 
       {/* 创建/编辑模态框 */}
       <Modal
-        title={editingStyle ? '编辑风格' : '新建风格'}
+        title={editingStyle ? '编辑风格' : '新建自定义风格'}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false)
@@ -291,38 +331,26 @@ export default function StyleLibraryPage() {
             <Input placeholder="例如：复古彩光" />
           </Form.Item>
 
-          <Form.Item name="category" label="分类">
-            <Select
-              placeholder="选择或输入分类"
-              allowClear
-              showSearch
-              options={categories.map((c) => ({ label: c, value: c }))}
-              dropdownRender={(menu) => (
-                <>
-                  {menu}
-                  <div className="px-3 py-2 border-t">
-                    <Input
-                      placeholder="输入新分类"
-                      size="small"
-                      onPressEnter={(e) => {
-                        const val = (e.target as HTMLInputElement).value
-                        if (val && !categories.includes(val)) {
-                          form.setFieldsValue({ category: val })
-                        }
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-            />
-          </Form.Item>
+          {/* 只有系统风格才显示分类和描述 */}
+          {editingIsSystem && (
+            <>
+              <Form.Item name="category" label="分类">
+                <Select
+                  placeholder="选择或输入分类"
+                  allowClear
+                  showSearch
+                  options={categories.map((c) => ({ label: c, value: c }))}
+                />
+              </Form.Item>
 
-          <Form.Item name="description" label="风格描述 / Prompt">
-            <Input.TextArea
-              rows={4}
-              placeholder="描述风格特征，或输入实际的 prompt..."
-            />
-          </Form.Item>
+              <Form.Item name="description" label="风格描述 / Prompt">
+                <Input.TextArea
+                  rows={4}
+                  placeholder="描述风格特征，或输入实际的 prompt..."
+                />
+              </Form.Item>
+            </>
+          )}
 
           <Form.Item label="示例图片">
             <Upload
@@ -353,13 +381,13 @@ export default function StyleLibraryPage() {
 
 interface StyleCardProps {
   style: Style
+  isSystem: boolean
   onEdit: () => void
   onCopy: () => void
   onDelete: () => void
-  canEdit: boolean
 }
 
-function StyleCard({ style, onEdit, onCopy, onDelete, canEdit }: StyleCardProps) {
+function StyleCard({ style, isSystem, onEdit, onCopy, onDelete }: StyleCardProps) {
   return (
     <Card
       hoverable
@@ -377,25 +405,14 @@ function StyleCard({ style, onEdit, onCopy, onDelete, canEdit }: StyleCardProps)
           )}
           <div className="absolute top-2 left-2">
             <Badge
-              count={style.style_type === 'system' ? '系统' : '自定义'}
+              count={isSystem ? '系统' : '自定义'}
               style={{
-                backgroundColor:
-                  style.style_type === 'system' ? '#4f46e5' : '#10b981',
+                backgroundColor: isSystem ? '#4f46e5' : '#10b981',
               }}
             />
           </div>
-          {canEdit && (
-            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                type="text"
-                size="small"
-                icon={<Edit3 size={14} />}
-                className="bg-white/80 hover:bg-white"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit()
-                }}
-              />
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {isSystem ? (
               <Button
                 type="text"
                 size="small"
@@ -406,38 +423,53 @@ function StyleCard({ style, onEdit, onCopy, onDelete, canEdit }: StyleCardProps)
                   onCopy()
                 }}
               />
-              <Popconfirm
-                title="确认删除？"
-                description="此操作不可恢复"
-                onConfirm={(e) => {
-                  e?.stopPropagation()
-                  onDelete()
-                }}
-                okText="删除"
-                cancelText="取消"
-                okButtonProps={{ danger: true }}
-              >
+            ) : (
+              <>
                 <Button
                   type="text"
                   size="small"
-                  icon={<Trash2 size={14} />}
-                  className="bg-white/80 hover:bg-white text-red-500"
-                  onClick={(e) => e.stopPropagation()}
+                  icon={<Edit3 size={14} />}
+                  className="bg-white/80 hover:bg-white"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit()
+                  }}
                 />
-              </Popconfirm>
-            </div>
-          )}
+                <Popconfirm
+                  title="确认删除？"
+                  description="此操作不可恢复"
+                  onConfirm={(e) => {
+                    e?.stopPropagation()
+                    onDelete()
+                  }}
+                  okText="删除"
+                  cancelText="取消"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<Trash2 size={14} />}
+                    className="bg-white/80 hover:bg-white text-red-500"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </Popconfirm>
+              </>
+            )}
+          </div>
         </div>
       }
     >
       <div>
         <h3 className="font-semibold text-gray-800 truncate">{style.name}</h3>
-        {style.category && (
+
+        {/* 只有系统风格显示分类和描述 */}
+        {isSystem && style.category && (
           <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full mt-1 inline-block">
             {style.category}
           </span>
         )}
-        {style.description && (
+        {isSystem && style.description && (
           <p className="text-xs text-gray-400 mt-2 line-clamp-2">
             {style.description}
           </p>
