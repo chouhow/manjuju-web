@@ -1,16 +1,72 @@
-import { get, post, put, del } from './client'
+import { get, del } from './client'
+import client from './client'
 import type { Style } from '@/types/style'
 
-export const styleApi = {
-  list: (params?: { style_type?: string }) => get<Style[]>('/styles', params),
+export interface StyleListResponse {
+  styles: Style[]
+}
 
-  getCategories: () => get<string[]>('/style/categories'),
+export interface StyleCategoryResponse {
+  categories: string[]
+}
+
+export const styleApi = {
+  list: (params?: { style_type?: string; category?: string }) =>
+    get<StyleListResponse>('/styles', params),
+
+  getCategories: () => get<StyleCategoryResponse>('/style/categories'),
 
   getById: (uid: string) => get<Style>(`/styles/${uid}`),
 
-  create: (data: Partial<Style>) => post<Style>('/styles', data),
+  create: (data: {
+    name: string
+    category?: string
+    description?: string
+    style_type?: string
+    reference_style_uid?: string
+    example_image?: File
+  }) => {
+    const formData = new FormData()
+    formData.append('name', data.name)
+    if (data.category) formData.append('category', data.category)
+    if (data.description) formData.append('description', data.description)
+    if (data.style_type) formData.append('style_type', data.style_type)
+    if (data.reference_style_uid)
+      formData.append('reference_style_uid', data.reference_style_uid)
+    if (data.example_image) formData.append('example_image', data.example_image)
 
-  update: (uid: string, data: Partial<Style>) => put<Style>(`/styles/${uid}`, data),
+    return client.post<{
+      code: number
+      msg: string
+      data: Style
+    }>('/styles', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((res) => res.data.data)
+  },
+
+  update: (
+    uid: string,
+    data: {
+      name?: string
+      category?: string
+      description?: string
+      example_image?: File
+    }
+  ) => {
+    const formData = new FormData()
+    if (data.name) formData.append('name', data.name)
+    if (data.category) formData.append('category', data.category)
+    if (data.description) formData.append('description', data.description)
+    if (data.example_image) formData.append('example_image', data.example_image)
+
+    return client.post<{
+      code: number
+      msg: string
+      data: Style
+    }>(`/styles/${uid}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((res) => res.data.data)
+  },
 
   delete: (uid: string) => del<{ deleted: boolean }>(`/styles/${uid}`),
 }

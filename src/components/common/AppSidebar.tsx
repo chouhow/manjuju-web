@@ -7,6 +7,7 @@ import {
   Trash2,
   Plus,
   MessageSquare,
+  Palette,
 } from 'lucide-react'
 import { useDramaStore } from '@/stores/dramaStore'
 import { useState } from 'react'
@@ -29,6 +30,11 @@ export default function AppSidebar() {
       key: '/dramas',
       icon: <Film size={18} />,
       label: '我的漫剧',
+    },
+    {
+      key: '/styles',
+      icon: <Palette size={18} />,
+      label: '风格库',
     },
     {
       key: '/favorites',

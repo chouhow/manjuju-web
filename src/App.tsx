@@ -10,6 +10,7 @@ import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
 import DramaListPage from '@/pages/DramaListPage'
 import ChatPage from '@/pages/ChatPage'
 import SettingsPage from '@/pages/SettingsPage'
+import StyleLibraryPage from '@/pages/StyleLibraryPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
 const queryClient = new QueryClient({
@@ -91,6 +92,14 @@ function App() {
                 element={
                   <PrivateRoute>
                     <ChatPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/styles"
+                element={
+                  <PrivateRoute>
+                    <StyleLibraryPage />
                   </PrivateRoute>
                 }
               />
