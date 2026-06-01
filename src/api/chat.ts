@@ -1,4 +1,5 @@
 import { get, post } from './client'
+import { getToken } from '@/utils/storage'
 import type { SelectedStyle } from '@/types/style'
 
 export interface ChatRequest {
@@ -9,10 +10,12 @@ export interface ChatRequest {
 
 export const chatApi = {
   streamChat: (data: ChatRequest) => {
+    const token = getToken()
     return fetch('/api/chat/stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(data),
     })
