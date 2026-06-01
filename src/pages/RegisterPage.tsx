@@ -1,7 +1,6 @@
-
 import { useNavigate, Link } from 'react-router-dom'
 import { Form, Input, Button, Card, Typography, message } from 'antd'
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, MailOutlined, MobileOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/stores/authStore'
 
 const { Title, Text } = Typography
@@ -11,16 +10,24 @@ export default function RegisterPage() {
   const { register, isLoading } = useAuthStore()
   const [form] = Form.useForm()
 
-  const handleSubmit = async (values: Record<string, string>) => {
-    if (values.password !== values.confirmPassword) {
+  const handleSubmit = async (values: {
+    username: string
+    phone: string
+    email?: string
+    password: string
+    confirm_password: string
+  }) => {
+    if (values.password !== values.confirm_password) {
       message.error('两次输入的密码不一致')
       return
     }
     try {
       await register({
         username: values.username,
+        phone: values.phone,
         email: values.email,
         password: values.password,
+        confirm_password: values.confirm_password,
       })
       message.success('注册成功，请登录')
       navigate('/login')
@@ -48,18 +55,41 @@ export default function RegisterPage() {
           </Form.Item>
 
           <Form.Item
+            name="phone"
+            rules={[
+              { required: true, message: '请输入手机号' },
+              {
+                pattern: /^1[3-9]\d{9}$/,
+                message: '手机号格式不正确',
+              },
+            ]}
+          >
+            <Input
+              prefix={<MobileOutlined />}
+              placeholder="手机号（必填）"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item
             name="email"
             rules={[
-              { required: true, message: '请输入邮箱' },
               { type: 'email', message: '请输入有效的邮箱地址' },
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="邮箱" size="large" />
+            <Input
+              prefix={<MailOutlined />}
+              placeholder="邮箱（可选）"
+              size="large"
+            />
           </Form.Item>
 
           <Form.Item
             name="password"
-            rules={[{ required: true, message: '请输入密码' }]}
+            rules={[
+              { required: true, message: '请输入密码' },
+              { min: 6, message: '密码至少6位' },
+            ]}
           >
             <Input.Password
               prefix={<LockOutlined />}
@@ -69,8 +99,18 @@ export default function RegisterPage() {
           </Form.Item>
 
           <Form.Item
-            name="confirmPassword"
-            rules={[{ required: true, message: '请确认密码' }]}
+            name="confirm_password"
+            rules={[
+              { required: true, message: '请确认密码' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve()
+                  }
+                  return Promise.reject(new Error('两次输入的密码不一致'))
+                },
+              }),
+            ]}
           >
             <Input.Password
               prefix={<LockOutlined />}

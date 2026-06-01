@@ -13,9 +13,10 @@ export interface LoginData {
 
 export interface RegisterData {
   username: string
+  phone: string
   email?: string
-  phone?: string
   password: string
+  confirm_password?: string
 }
 
 export interface User {
