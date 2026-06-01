@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Input, Empty, Spin, message, Tabs } from 'antd'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Film } from 'lucide-react'
@@ -9,12 +9,17 @@ import DramaCard from '@/components/drama/DramaCard'
 import AppHeader from '@/components/common/AppHeader'
 import AppSidebar from '@/components/common/AppSidebar'
 
-export default function DramaListPage() {
+interface Props {
+  defaultTab?: 'all' | 'favorites'
+}
+
+export default function DramaListPage({ defaultTab = 'all' }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { dramas, favorites, setDramas, setFavorites, isLoading, setLoading } =
     useDramaStore()
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'favorites'>(defaultTab)
 
   useEffect(() => {
     loadDramas()
@@ -62,7 +67,9 @@ export default function DramaListPage() {
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">我的漫剧</h1>
+              <h1 className="text-2xl font-bold text-gray-800">
+                {location.pathname === '/favorites' ? '我的收藏' : '我的漫剧'}
+              </h1>
               <div className="flex items-center gap-3">
                 <Input
                   prefix={<Search size={16} className="text-gray-400" />}
@@ -76,7 +83,7 @@ export default function DramaListPage() {
               </div>
             </div>
 
-            <Tabs activeKey={activeTab} onChange={setActiveTab} className="mb-4">
+            <Tabs activeKey={activeTab} onChange={(key) => setActiveTab(key as 'all' | 'favorites')} className="mb-4">
               <Tabs.TabPane tab="全部漫剧" key="all" />
               <Tabs.TabPane tab="收藏" key="favorites" />
             </Tabs>

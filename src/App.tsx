@@ -11,6 +11,7 @@ import DramaListPage from '@/pages/DramaListPage'
 import ChatPage from '@/pages/ChatPage'
 import SettingsPage from '@/pages/SettingsPage'
 import StyleLibraryPage from '@/pages/StyleLibraryPage'
+import RecycledPage from '@/pages/RecycledPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
 const queryClient = new QueryClient({
@@ -76,6 +77,22 @@ function App() {
                 element={
                   <PrivateRoute>
                     <DramaListPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/favorites"
+                element={
+                  <PrivateRoute>
+                    <DramaListPage defaultTab="favorites" />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/recycled"
+                element={
+                  <PrivateRoute>
+                    <RecycledPage />
                   </PrivateRoute>
                 }
               />
