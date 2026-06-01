@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Form, Input, Button, Card, Typography, Tabs, message } from 'antd'
-import { UserOutlined, LockOutlined, MailOutlined, MobileOutlined } from '@ant-design/icons'
+import { MailOutlined, LockOutlined, MobileOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/stores/authStore'
 
 const { Title, Text } = Typography
@@ -16,8 +16,8 @@ export default function LoginPage() {
     try {
       const loginData =
         activeTab === 'password'
-          ? { username: values.username, password: values.password }
-          : { phone: values.phone, code: values.code }
+          ? { email: values.email, password: values.password }
+          : { phone: values.phone, verification_code: values.verification_code }
 
       await login(loginData)
       message.success('登录成功')
@@ -41,12 +41,12 @@ export default function LoginPage() {
           <Tabs.TabPane tab="密码登录" key="password">
             <Form form={form} layout="vertical" onFinish={handleSubmit}>
               <Form.Item
-                name="username"
-                rules={[{ required: true, message: '请输入用户名或邮箱' }]}
+                name="email"
+                rules={[{ required: true, message: '请输入邮箱' }]}
               >
                 <Input
-                  prefix={<UserOutlined />}
-                  placeholder="用户名 / 邮箱"
+                  prefix={<MailOutlined />}
+                  placeholder="邮箱"
                   size="large"
                 />
               </Form.Item>
@@ -87,7 +87,7 @@ export default function LoginPage() {
                 />
               </Form.Item>
               <Form.Item
-                name="code"
+                name="verification_code"
                 rules={[{ required: true, message: '请输入验证码' }]}
               >
                 <Input

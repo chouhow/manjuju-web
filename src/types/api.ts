@@ -5,11 +5,10 @@ export interface ApiResponse<T = unknown> {
 }
 
 export interface LoginData {
-  username?: string
   email?: string
   phone?: string
   password?: string
-  code?: string
+  verification_code?: string
 }
 
 export interface RegisterData {
