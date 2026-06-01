@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { ConfigProvider, Spin } from 'antd'
+import { ConfigProvider } from 'antd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { antdTheme } from '@/theme'
-import { useAuthStore } from '@/stores/authStore'
+import { getToken } from '@/utils/storage'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
@@ -24,27 +24,11 @@ const queryClient = new QueryClient({
 })
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { token, isHydrated } = useAuthStore()
-  if (!isHydrated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spin size="large" />
-      </div>
-    )
-  }
-  return token ? <>{children}</> : <Navigate to="/login" replace />
+  return getToken() ? <>{children}</> : <Navigate to="/login" replace />
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { token, isHydrated } = useAuthStore()
-  if (!isHydrated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spin size="large" />
-      </div>
-    )
-  }
-  return !token ? <>{children}</> : <Navigate to="/" replace />
+  return !getToken() ? <>{children}</> : <Navigate to="/" replace />
 }
 
 function App() {
