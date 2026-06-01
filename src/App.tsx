@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { ConfigProvider } from 'antd'
+import { ConfigProvider, Spin } from 'antd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { antdTheme } from '@/theme'
 import { useAuthStore } from '@/stores/authStore'
@@ -24,13 +24,27 @@ const queryClient = new QueryClient({
 })
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore()
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />
+  const { token, isHydrated } = useAuthStore()
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spin size="large" />
+      </div>
+    )
+  }
+  return token ? <>{children}</> : <Navigate to="/login" replace />
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore()
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/" />
+  const { token, isHydrated } = useAuthStore()
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spin size="large" />
+      </div>
+    )
+  }
+  return !token ? <>{children}</> : <Navigate to="/" replace />
 }
 
 function App() {

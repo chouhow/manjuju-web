@@ -7,9 +7,9 @@ import type { User, LoginData, RegisterData, TokenData } from '@/types/api'
 interface AuthState {
   token: string | null
   user: User | null
-  isAuthenticated: boolean
   isLoading: boolean
   error: string | null
+  isHydrated: boolean
 
   login: (data: LoginData) => Promise<void>
   register: (data: RegisterData) => Promise<void>
@@ -23,19 +23,19 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       token: null,
       user: null,
-      isAuthenticated: false,
       isLoading: false,
       error: null,
+      isHydrated: false,
 
       login: async (data) => {
         set({ isLoading: true, error: null })
         try {
           const result: TokenData = await authApi.login(data)
           setToken(result.access_token)
-          set({ token: result.access_token, isAuthenticated: true })
+          set({ token: result.access_token })
           await get().fetchProfile()
         } catch (error) {
-          set({ error: (error as Error).message, isAuthenticated: false })
+          set({ error: (error as Error).message })
           throw error
         } finally {
           set({ isLoading: false })
@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         removeToken()
-        set({ token: null, user: null, isAuthenticated: false, error: null })
+        set({ token: null, user: null, error: null })
       },
 
       fetchProfile: async () => {
@@ -75,8 +75,12 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         token: state.token,
         user: state.user,
-        isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.isHydrated = true
+        }
+      },
     }
   )
 )
