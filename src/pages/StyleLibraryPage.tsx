@@ -6,6 +6,7 @@ import {
   Form,
   Input,
   Select,
+  AutoComplete,
   Tabs,
   Empty,
   Spin,
@@ -14,6 +15,8 @@ import {
   Popconfirm,
   Upload,
   Image,
+  Tag,
+  Divider,
 } from 'antd'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -25,9 +28,11 @@ import {
   ImageIcon,
   Sparkles,
   User,
+  X,
+  FileText,
 } from 'lucide-react'
 import { styleApi } from '@/api/style'
-import type { Style } from '@/types/style'
+import type { Style, StyleExample } from '@/types/style'
 import AppHeader from '@/components/common/AppHeader'
 import AppSidebar from '@/components/common/AppSidebar'
 
@@ -39,9 +44,17 @@ export default function StyleLibraryPage() {
   const [activeTab, setActiveTab] = useState('system')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingStyle, setEditingStyle] = useState<Style | null>(null)
+  const [creatingType, setCreatingType] = useState<'system' | 'custom'>('custom')
   const [form] = Form.useForm()
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>('')
+
+  const [examples, setExamples] = useState<StyleExample[]>([])
+  const [examplesLoading, setExamplesLoading] = useState(false)
+  const [addingExample, setAddingExample] = useState(false)
+  const [exampleForm] = Form.useForm()
+  const [exampleImageFile, setExampleImageFile] = useState<File | null>(null)
+  const [examplePreviewUrl, setExamplePreviewUrl] = useState<string>('')
 
   const loadData = useCallback(async () => {
     setIsLoading(true)
@@ -77,9 +90,9 @@ export default function StyleLibraryPage() {
     try {
       await styleApi.create({
         name: values.name,
-        category: activeTab === 'system' ? values.category : undefined,
-        description: activeTab === 'system' ? values.description : undefined,
-        style_type: 'custom',
+        category: creatingType === 'system' ? values.category : undefined,
+        description: creatingType === 'system' ? values.description : undefined,
+        style_type: creatingType,
         example_image: uploadFile || undefined,
       })
       message.success('风格创建成功')
@@ -151,6 +164,7 @@ export default function StyleLibraryPage() {
     setUploadFile(null)
     setPreviewUrl('')
     form.resetFields()
+    setCreatingType(activeTab as 'system' | 'custom')
     setModalOpen(true)
   }
 
@@ -163,7 +177,61 @@ export default function StyleLibraryPage() {
       category: style.category,
       description: style.description,
     })
+    loadExamples(style.uid)
     setModalOpen(true)
+  }
+
+  const loadExamples = useCallback(async (styleUid: string) => {
+    setExamplesLoading(true)
+    try {
+      const res = await styleApi.getExamples(styleUid)
+      setExamples(res.examples || [])
+    } catch (error) {
+      message.error((error as Error).message)
+    } finally {
+      setExamplesLoading(false)
+    }
+  }, [])
+
+  const handleAddExample = async () => {
+    if (!editingStyle) return
+    try {
+      const values = await exampleForm.validateFields()
+      setAddingExample(true)
+      await styleApi.addExample(editingStyle.uid, {
+        example_type: values.example_type,
+        prompt_example: values.prompt_example,
+        example_image: exampleImageFile || undefined,
+      })
+      message.success('示例添加成功')
+      exampleForm.resetFields()
+      setExampleImageFile(null)
+      setExamplePreviewUrl('')
+      loadExamples(editingStyle.uid)
+    } catch (error) {
+      if ((error as Error).message) {
+        message.error((error as Error).message)
+      }
+    } finally {
+      setAddingExample(false)
+    }
+  }
+
+  const handleDeleteExample = async (exampleId: string) => {
+    if (!editingStyle) return
+    try {
+      await styleApi.deleteExample(editingStyle.uid, exampleId)
+      message.success('示例已删除')
+      loadExamples(editingStyle.uid)
+    } catch (error) {
+      message.error((error as Error).message)
+    }
+  }
+
+  const handleExampleUpload = (file: File) => {
+    setExampleImageFile(file)
+    setExamplePreviewUrl(URL.createObjectURL(file))
+    return false
   }
 
   const handleUpload = (file: File) => {
@@ -215,16 +283,14 @@ export default function StyleLibraryPage() {
                     : '管理你的自定义风格库'}
                 </p>
               </div>
-              {!isSystemView && (
-                <Button
-                  type="primary"
-                  icon={<Plus size={16} />}
-                  size="large"
-                  onClick={openCreateModal}
-                >
-                  新建风格
-                </Button>
-              )}
+              <Button
+                type="primary"
+                icon={<Plus size={16} />}
+                size="large"
+                onClick={openCreateModal}
+              >
+                {isSystemView ? '新建系统预设' : '新建风格'}
+              </Button>
             </div>
 
             <Tabs
@@ -268,7 +334,7 @@ export default function StyleLibraryPage() {
               <Empty
                 description={
                   isSystemView
-                    ? '暂无系统预设风格'
+                    ? '暂无系统预设风格，点击右上角创建'
                     : '还没有自定义风格，点击右上角创建'
                 }
                 className="py-20"
@@ -305,7 +371,15 @@ export default function StyleLibraryPage() {
 
       {/* 创建/编辑模态框 */}
       <Modal
-        title={editingStyle ? '编辑风格' : '新建自定义风格'}
+        title={
+          editingStyle
+            ? editingIsSystem
+              ? '编辑风格示例'
+              : '编辑风格'
+            : creatingType === 'system'
+            ? '新建系统预设'
+            : '新建自定义风格'
+        }
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false)
@@ -313,6 +387,10 @@ export default function StyleLibraryPage() {
           setUploadFile(null)
           setPreviewUrl('')
           form.resetFields()
+          setExamples([])
+          exampleForm.resetFields()
+          setExampleImageFile(null)
+          setExamplePreviewUrl('')
         }}
         onOk={() => form.submit()}
         destroyOnClose
@@ -328,18 +406,21 @@ export default function StyleLibraryPage() {
             label="风格名称"
             rules={[{ required: true, message: '请输入风格名称' }]}
           >
-            <Input placeholder="例如：复古彩光" />
+            <Input placeholder="例如：复古彩光" disabled={editingIsSystem} />
           </Form.Item>
 
-          {/* 只有系统风格才显示分类和描述 */}
-          {editingIsSystem && (
+          {/* 系统风格（编辑或新建）才显示分类和描述 */}
+          {(editingIsSystem || (!editingStyle && creatingType === 'system')) && (
             <>
               <Form.Item name="category" label="分类">
-                <Select
+                <AutoComplete
                   placeholder="选择或输入分类"
                   allowClear
-                  showSearch
                   options={categories.map((c) => ({ label: c, value: c }))}
+                  filterOption={(inputValue, option) =>
+                    option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                  }
+                  disabled={editingIsSystem}
                 />
               </Form.Item>
 
@@ -347,6 +428,7 @@ export default function StyleLibraryPage() {
                 <Input.TextArea
                   rows={4}
                   placeholder="描述风格特征，或输入实际的 prompt..."
+                  disabled={editingIsSystem}
                 />
               </Form.Item>
             </>
@@ -371,6 +453,142 @@ export default function StyleLibraryPage() {
               </div>
             )}
           </Form.Item>
+
+          {editingStyle && (
+            <>
+              <Divider style={{ margin: '16px 0' }} />
+
+              <div className="mb-2 flex items-center gap-2">
+                <FileText size={16} className="text-indigo-500" />
+                <span className="font-medium text-gray-700">风格示例</span>
+              </div>
+
+              {examplesLoading ? (
+                <div className="flex justify-center py-4">
+                  <Spin size="small" />
+                </div>
+              ) : examples.length === 0 ? (
+                <Empty
+                  description="暂无示例"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  className="py-2"
+                />
+              ) : (
+                <div className="space-y-2 mb-4 max-h-64 overflow-y-auto pr-1">
+                  {examples.map((ex) => (
+                    <div
+                      key={ex.id}
+                      className="flex items-start gap-2 bg-gray-50 p-3 rounded-lg"
+                    >
+                      {ex.image_url && (
+                        <Image
+                          src={ex.image_url}
+                          alt="示例"
+                          className="w-16 h-16 rounded object-cover flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <Tag
+                          className={`!text-xs !px-1.5 !py-0 !border-0 !font-semibold ${
+                            ex.example_type === 'character'
+                              ? '!bg-blue-100 !text-blue-700'
+                              : '!bg-emerald-100 !text-emerald-700'
+                          }`}
+                        >
+                          {ex.example_type === 'character' ? '角色' : '场景'}
+                        </Tag>
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-3">
+                          {ex.prompt_example}
+                        </p>
+                      </div>
+                      <Popconfirm
+                        title="确认删除？"
+                        description="此操作不可恢复"
+                        onConfirm={() => handleDeleteExample(ex.id)}
+                        okText="删除"
+                        cancelText="取消"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <Button
+                          type="text"
+                          danger
+                          icon={<X size={14} />}
+                          className="flex-shrink-0"
+                        />
+                      </Popconfirm>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
+                <div className="text-xs font-medium text-indigo-700 mb-2">
+                  添加新示例
+                </div>
+                <Form
+                  form={exampleForm}
+                  layout="vertical"
+                  className="!mb-0"
+                >
+                  <Form.Item
+                    name="example_type"
+                    label="类型"
+                    rules={[{ required: true, message: '请选择类型' }]}
+                    className="!mb-2"
+                  >
+                    <Select
+                      placeholder="选择类型"
+                      options={[
+                        { label: '角色', value: 'character' },
+                        { label: '场景', value: 'scene' },
+                      ]}
+                      style={{ width: 120 }}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="prompt_example"
+                    label="提示词"
+                    className="!mb-2"
+                  >
+                    <Input.TextArea
+                      rows={2}
+                      placeholder="输入该风格对应的提示词示例..."
+                    />
+                  </Form.Item>
+                  <Form.Item label="示例图片" className="!mb-2">
+                    <Upload
+                      beforeUpload={handleExampleUpload}
+                      showUploadList={false}
+                      accept="image/*"
+                    >
+                      <Button icon={<ImageIcon size={14} />} size="small">
+                        选择图片
+                      </Button>
+                    </Upload>
+                    {examplePreviewUrl && (
+                      <div className="mt-2">
+                        <Image
+                          src={examplePreviewUrl}
+                          alt="预览"
+                          className="rounded-lg"
+                          style={{ maxHeight: 120, objectFit: 'cover' }}
+                        />
+                      </div>
+                    )}
+                  </Form.Item>
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={handleAddExample}
+                    loading={addingExample}
+                    icon={<Plus size={14} />}
+                  >
+                    添加示例
+                  </Button>
+                </Form>
+              </div>
+            </>
+          )}
         </Form>
       </Modal>
     </div>
@@ -412,6 +630,16 @@ function StyleCard({ style, isSystem, onEdit, onCopy, onDelete }: StyleCardProps
             />
           </div>
           <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              type="text"
+              size="small"
+              icon={<Edit3 size={14} />}
+              className="bg-white/80 hover:bg-white"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit()
+              }}
+            />
             {isSystem ? (
               <Button
                 type="text"
@@ -424,37 +652,25 @@ function StyleCard({ style, isSystem, onEdit, onCopy, onDelete }: StyleCardProps
                 }}
               />
             ) : (
-              <>
+              <Popconfirm
+                title="确认删除？"
+                description="此操作不可恢复"
+                onConfirm={(e) => {
+                  e?.stopPropagation()
+                  onDelete()
+                }}
+                okText="删除"
+                cancelText="取消"
+                okButtonProps={{ danger: true }}
+              >
                 <Button
                   type="text"
                   size="small"
-                  icon={<Edit3 size={14} />}
-                  className="bg-white/80 hover:bg-white"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onEdit()
-                  }}
+                  icon={<Trash2 size={14} />}
+                  className="bg-white/80 hover:bg-white text-red-500"
+                  onClick={(e) => e.stopPropagation()}
                 />
-                <Popconfirm
-                  title="确认删除？"
-                  description="此操作不可恢复"
-                  onConfirm={(e) => {
-                    e?.stopPropagation()
-                    onDelete()
-                  }}
-                  okText="删除"
-                  cancelText="取消"
-                  okButtonProps={{ danger: true }}
-                >
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<Trash2 size={14} />}
-                    className="bg-white/80 hover:bg-white text-red-500"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </Popconfirm>
-              </>
+              </Popconfirm>
             )}
           </div>
         </div>
@@ -473,6 +689,30 @@ function StyleCard({ style, isSystem, onEdit, onCopy, onDelete }: StyleCardProps
           <p className="text-xs text-gray-400 mt-2 line-clamp-2">
             {style.description}
           </p>
+        )}
+        {style.examples && style.examples.length > 0 && (
+          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-medium text-gray-600">
+              示例 {style.examples.length} 个
+            </span>
+            {style.examples.slice(0, 3).map((ex, i) => (
+              <Tag
+                key={i}
+                className={`!text-xs !px-1.5 !py-0 !border-0 !font-semibold ${
+                  ex.example_type === 'character'
+                    ? '!bg-blue-100 !text-blue-700'
+                    : '!bg-emerald-100 !text-emerald-700'
+                }`}
+              >
+                {ex.example_type === 'character' ? '角色' : '场景'}
+              </Tag>
+            ))}
+            {style.examples.length > 3 && (
+              <Tag className="!text-xs !px-1.5 !py-0 !border-0 !bg-gray-100 !text-gray-600 !font-semibold">
+                +{style.examples.length - 3}
+              </Tag>
+            )}
+          </div>
         )}
       </div>
     </Card>

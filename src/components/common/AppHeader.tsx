@@ -49,7 +49,7 @@ export default function AppHeader() {
     <Header className="!bg-white !px-6 flex items-center justify-between shadow-sm z-50 sticky top-0">
       <Link to="/" className="flex items-center gap-2 no-underline">
         <Film className="text-indigo-600" size={28} />
-        <span className="text-xl font-bold text-indigo-600">Mindevo</span>
+        <span className="text-xl font-bold text-indigo-600">AI漫剧</span>
       </Link>
 
       <div className="flex items-center gap-4">

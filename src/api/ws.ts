@@ -16,7 +16,7 @@ export class WebSocketClient {
   connect() {
     if (this.ws?.readyState === WebSocket.OPEN) return
 
-    const url = `${WS_URL}/api/mindevo/ws?topic=${this.topic}`
+    const url = `${WS_URL}/api/ws?topic=${this.topic}`
     this.ws = new WebSocket(url)
 
     this.ws.onopen = () => {

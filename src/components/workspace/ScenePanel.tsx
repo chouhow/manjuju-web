@@ -1,9 +1,12 @@
-import { Empty, Card } from 'antd'
+import { useState } from 'react'
+import { Empty, Card, Modal, Descriptions, Image } from 'antd'
 import { ImageOff } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import type { Scene } from '@/types/scene'
 
 export default function ScenePanel() {
   const { scenes } = useWorkspaceStore()
+  const [selectedScene, setSelectedScene] = useState<Scene | null>(null)
 
   if (scenes.length === 0) {
     return (
@@ -22,6 +25,7 @@ export default function ScenePanel() {
           key={scene.uid || index}
           size="small"
           className="!rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => setSelectedScene(scene)}
           cover={
             scene.image_url ? (
               <div className="h-28 bg-gray-100">
@@ -51,6 +55,47 @@ export default function ScenePanel() {
           </div>
         </Card>
       ))}
+
+      <Modal
+        open={!!selectedScene}
+        onCancel={() => setSelectedScene(null)}
+        footer={null}
+        title={selectedScene?.name}
+        width={640}
+      >
+        <div className="space-y-4">
+          {(selectedScene?.image_url || selectedScene?.multi_view_image_url) && (
+            <div className="flex gap-3">
+              {selectedScene.image_url && (
+                <Image
+                  src={selectedScene.image_url}
+                  alt={`${selectedScene.name} 场景图`}
+                  className="rounded-lg"
+                  style={{ maxHeight: 240, objectFit: 'cover' }}
+                />
+              )}
+              {selectedScene.multi_view_image_url && (
+                <Image
+                  src={selectedScene.multi_view_image_url}
+                  alt={`${selectedScene.name} 多视角图`}
+                  className="rounded-lg"
+                  style={{ maxHeight: 240, objectFit: 'cover' }}
+                />
+              )}
+            </div>
+          )}
+          <Descriptions column={1} size="small" bordered>
+            <Descriptions.Item label="名称">{selectedScene?.name}</Descriptions.Item>
+            <Descriptions.Item label="描述">{selectedScene?.description || '-'}</Descriptions.Item>
+            <Descriptions.Item label="提示词">{selectedScene?.prompt || '-'}</Descriptions.Item>
+            <Descriptions.Item label="资产">
+              {selectedScene?.is_asset ? '是' : '否'}
+            </Descriptions.Item>
+            <Descriptions.Item label="创建时间">{selectedScene?.created_at || '-'}</Descriptions.Item>
+            <Descriptions.Item label="更新时间">{selectedScene?.updated_at || '-'}</Descriptions.Item>
+          </Descriptions>
+        </div>
+      </Modal>
     </div>
   )
 }

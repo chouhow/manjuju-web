@@ -43,7 +43,7 @@ export default function RegisterPage() {
           <Title level={2} className="!mb-2">
             <span className="text-indigo-600">注册账号</span>
           </Title>
-          <Text className="text-gray-500">创建您的 Mindevo 账户</Text>
+          <Text className="text-gray-500">创建您的账户</Text>
         </div>
 
         <Form form={form} layout="vertical" onFinish={handleSubmit}>

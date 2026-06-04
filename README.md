@@ -1,6 +1,6 @@
-# Mindevo 前端
+# 漫剧AI前端
 
-Mindevo 漫剧AI生成平台的 React 前端应用。
+漫剧AI生成平台的 React 前端应用。
 
 ## 技术栈
 

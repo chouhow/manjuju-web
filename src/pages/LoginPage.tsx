@@ -32,7 +32,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-2xl rounded-2xl">
         <div className="text-center mb-8">
           <Title level={2} className="!mb-2">
-            <span className="text-indigo-600">Mindevo</span>
+            <span className="text-indigo-600">AI漫剧</span>
           </Title>
           <Text className="text-gray-500">AI 漫剧创作平台</Text>
         </div>

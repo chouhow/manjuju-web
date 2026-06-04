@@ -1,8 +1,11 @@
-import { Empty, Card, Badge } from 'antd'
+import { useState } from 'react'
+import { Empty, Card, Badge, Modal, Descriptions, Image } from 'antd'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import type { Storyboard } from '@/types/storyboard'
 
 export default function StoryboardPanel() {
   const { storyboards } = useWorkspaceStore()
+  const [selectedSb, setSelectedSb] = useState<Storyboard | null>(null)
 
   if (storyboards.length === 0) {
     return (
@@ -21,6 +24,7 @@ export default function StoryboardPanel() {
           key={sb.id}
           size="small"
           className="!rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => setSelectedSb(sb)}
         >
           <div className="flex items-start gap-3">
             <div className="shrink-0">
@@ -76,6 +80,57 @@ export default function StoryboardPanel() {
           </div>
         </Card>
       ))}
+
+      <Modal
+        open={!!selectedSb}
+        onCancel={() => setSelectedSb(null)}
+        footer={null}
+        title={`分镜 #${selectedSb?.sequence}`}
+        width={680}
+      >
+        <div className="space-y-4">
+          {selectedSb?.video_url && (
+            <video
+              src={selectedSb.video_url}
+              controls
+              className="w-full rounded-lg"
+              style={{ maxHeight: 320 }}
+            />
+          )}
+          {selectedSb?.storyboard_images && selectedSb.storyboard_images.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {selectedSb.storyboard_images.map((img, idx) => (
+                <Image
+                  key={idx}
+                  src={img}
+                  alt={`分镜图 ${idx + 1}`}
+                  className="h-32 rounded-lg object-cover"
+                />
+              ))}
+            </div>
+          )}
+          {selectedSb?.total_storyboard_url && (
+            <Image
+              src={selectedSb.total_storyboard_url}
+              alt="完整分镜图"
+              className="rounded-lg"
+              style={{ maxHeight: 320, objectFit: 'cover' }}
+            />
+          )}
+          <Descriptions column={1} size="small" bordered>
+            <Descriptions.Item label="序号">{selectedSb?.sequence}</Descriptions.Item>
+            <Descriptions.Item label="内容">{selectedSb?.content || '-'}</Descriptions.Item>
+            <Descriptions.Item label="角色">
+              {selectedSb?.character_names?.length
+                ? selectedSb.character_names.join(', ')
+                : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="场景">{selectedSb?.scene_name || '-'}</Descriptions.Item>
+            <Descriptions.Item label="创建时间">{selectedSb?.created_at || '-'}</Descriptions.Item>
+            <Descriptions.Item label="更新时间">{selectedSb?.updated_at || '-'}</Descriptions.Item>
+          </Descriptions>
+        </div>
+      </Modal>
     </div>
   )
 }

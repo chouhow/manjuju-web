@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
           <Title level={2} className="!mb-2">
             <span className="text-indigo-600">找回密码</span>
           </Title>
-          <Text className="text-gray-500">重置您的 Mindevo 账户密码</Text>
+          <Text className="text-gray-500">重置您的账户密码</Text>
         </div>
 
         <Steps current={currentStep} items={stepItems} className="mb-8" />

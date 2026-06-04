@@ -1,9 +1,12 @@
-import { Empty, Card, Badge } from 'antd'
+import { useState } from 'react'
+import { Empty, Card, Badge, Modal, Descriptions, Image } from 'antd'
 import { UserCircle } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import type { Character } from '@/types/character'
 
 export default function CharacterPanel() {
   const { characters } = useWorkspaceStore()
+  const [selectedChar, setSelectedChar] = useState<Character | null>(null)
 
   if (characters.length === 0) {
     return (
@@ -22,6 +25,7 @@ export default function CharacterPanel() {
           key={char.uid || index}
           size="small"
           className="!rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => setSelectedChar(char)}
           cover={
             char.portrait_image_url || char.concept_image_url ? (
               <div className="h-32 bg-gray-100">
@@ -56,6 +60,48 @@ export default function CharacterPanel() {
           </div>
         </Card>
       ))}
+
+      <Modal
+        open={!!selectedChar}
+        onCancel={() => setSelectedChar(null)}
+        footer={null}
+        title={selectedChar?.name}
+        width={640}
+      >
+        <div className="space-y-4">
+          {(selectedChar?.portrait_image_url || selectedChar?.concept_image_url) && (
+            <div className="flex gap-3">
+              {selectedChar.portrait_image_url && (
+                <Image
+                  src={selectedChar.portrait_image_url}
+                  alt={`${selectedChar.name} 肖像`}
+                  className="rounded-lg"
+                  style={{ maxHeight: 240, objectFit: 'cover' }}
+                />
+              )}
+              {selectedChar.concept_image_url && (
+                <Image
+                  src={selectedChar.concept_image_url}
+                  alt={`${selectedChar.name} 概念图`}
+                  className="rounded-lg"
+                  style={{ maxHeight: 240, objectFit: 'cover' }}
+                />
+              )}
+            </div>
+          )}
+          <Descriptions column={1} size="small" bordered>
+            <Descriptions.Item label="名称">{selectedChar?.name}</Descriptions.Item>
+            <Descriptions.Item label="背景">{selectedChar?.background || '-'}</Descriptions.Item>
+            <Descriptions.Item label="肖像提示词">{selectedChar?.portrait_prompt || '-'}</Descriptions.Item>
+            <Descriptions.Item label="概念提示词">{selectedChar?.concept_prompt || '-'}</Descriptions.Item>
+            <Descriptions.Item label="资产">
+              {selectedChar?.is_asset ? '是' : '否'}
+            </Descriptions.Item>
+            <Descriptions.Item label="创建时间">{selectedChar?.created_at || '-'}</Descriptions.Item>
+            <Descriptions.Item label="更新时间">{selectedChar?.updated_at || '-'}</Descriptions.Item>
+          </Descriptions>
+        </div>
+      </Modal>
     </div>
   )
 }
