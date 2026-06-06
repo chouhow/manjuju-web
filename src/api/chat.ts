@@ -1,11 +1,13 @@
 import { get, post } from './client'
 import { getToken } from '@/utils/storage'
 import type { SelectedStyle } from '@/types/style'
+import type { AssetReference } from '@/types/message'
 
 export interface ChatRequest {
   user_input: string
   conversation_id: string
   style?: SelectedStyle
+  references?: AssetReference[]
 }
 
 export const chatApi = {

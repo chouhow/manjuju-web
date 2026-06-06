@@ -4,6 +4,7 @@ import { useDramaStore } from '@/stores/dramaStore'
 import { useSSEChat } from '@/hooks/useSSEChat'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { Film, Users, Mountain, Clapperboard } from 'lucide-react'
+import type { AssetReference } from '@/types/message'
 import ChatMessageList from './ChatMessageList'
 import ChatInput from './ChatInput'
 
@@ -19,9 +20,9 @@ export default function ChatContainer() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async (text: string) => {
+  const handleSend = async (text: string, references?: AssetReference[]) => {
     if (!currentConversationId) return
-    await sendMessage(text, currentConversationId)
+    await sendMessage(text, currentConversationId, undefined, references)
   }
 
   const handleStop = () => {

@@ -1,12 +1,53 @@
 import { useState } from 'react'
-import { Empty, Card, Modal, Descriptions, Image } from 'antd'
-import { ImageOff } from 'lucide-react'
+import { Empty, Card, Modal, Descriptions, Image, message, Tooltip } from 'antd'
+import { ImageOff, Plus, RefreshCw } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { post } from '@/api/client'
 import type { Scene } from '@/types/scene'
 
 export default function ScenePanel() {
-  const { scenes } = useWorkspaceStore()
+  const { scenes, updateScenes } = useWorkspaceStore()
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null)
+  const [actionSet, setActionSet] = useState<Set<string>>(new Set())
+
+  const handleAddToAsset = async (e: React.MouseEvent, scene: Scene) => {
+    e.stopPropagation()
+    if (!scene.uid || actionSet.has(scene.uid)) return
+    setActionSet(prev => new Set(prev).add(scene.uid))
+    try {
+      await post('/assets/scenes', { source_uid: scene.uid })
+      message.success(`场景「${scene.name}」已添加到资产库`)
+      updateScenes({
+        scenes: [{ name: scene.name, is_asset: true } as Scene],
+      })
+    } catch (err: any) {
+      message.error(err.message || '添加失败')
+    } finally {
+      setActionSet(prev => {
+        const next = new Set(prev)
+        next.delete(scene.uid!)
+        return next
+      })
+    }
+  }
+
+  const handleSyncToAsset = async (e: React.MouseEvent, scene: Scene) => {
+    e.stopPropagation()
+    if (!scene.uid || actionSet.has(scene.uid)) return
+    setActionSet(prev => new Set(prev).add(scene.uid))
+    try {
+      await post('/assets/scenes/sync', { source_uid: scene.uid })
+      message.success(`场景「${scene.name}」已同步到资产库`)
+    } catch (err: any) {
+      message.error(err.message || '同步失败')
+    } finally {
+      setActionSet(prev => {
+        const next = new Set(prev)
+        next.delete(scene.uid!)
+        return next
+      })
+    }
+  }
 
   if (scenes.length === 0) {
     return (
@@ -24,16 +65,37 @@ export default function ScenePanel() {
         <Card
           key={scene.uid || index}
           size="small"
-          className="!rounded-xl hover:shadow-md transition-shadow cursor-pointer"
+          className="!rounded-xl hover:shadow-md transition-shadow cursor-pointer group relative"
           onClick={() => setSelectedScene(scene)}
           cover={
             scene.image_url ? (
-              <div className="h-28 bg-gray-100">
+              <div className="h-28 bg-gray-100 relative">
                 <img
                   src={scene.image_url}
                   alt={scene.name}
                   className="w-full h-full object-cover rounded-t-xl"
                 />
+                {scene.is_asset ? (
+                  <Tooltip title="同步到资产库">
+                    <button
+                      onClick={(e) => handleSyncToAsset(e, scene)}
+                      disabled={actionSet.has(scene.uid!)}
+                      className="absolute top-2 right-2 w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                    >
+                      <RefreshCw size={12} className="text-emerald-600" />
+                    </button>
+                  </Tooltip>
+                ) : (
+                  <Tooltip title="添加到资产库">
+                    <button
+                      onClick={(e) => handleAddToAsset(e, scene)}
+                      disabled={actionSet.has(scene.uid!)}
+                      className="absolute top-2 right-2 w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                    >
+                      <Plus size={14} className="text-emerald-600" />
+                    </button>
+                  </Tooltip>
+                )}
               </div>
             ) : null
           }
@@ -45,7 +107,32 @@ export default function ScenePanel() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <span className="font-semibold text-gray-800">{scene.name}</span>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-gray-800">{scene.name}</span>
+                {scene.is_asset ? (
+                  <Tooltip title="同步到资产库">
+                    <button
+                      onClick={(e) => handleSyncToAsset(e, scene)}
+                      disabled={actionSet.has(scene.uid!)}
+                      className="w-6 h-6 rounded-full bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                    >
+                      <RefreshCw size={10} className="text-emerald-600" />
+                    </button>
+                  </Tooltip>
+                ) : (
+                  !scene.image_url && (
+                    <Tooltip title="添加到资产库">
+                      <button
+                        onClick={(e) => handleAddToAsset(e, scene)}
+                        disabled={actionSet.has(scene.uid!)}
+                        className="w-6 h-6 rounded-full bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                      >
+                        <Plus size={12} className="text-emerald-600" />
+                      </button>
+                    </Tooltip>
+                  )
+                )}
+              </div>
               {scene.description && (
                 <p className="text-xs text-gray-500 mt-1 line-clamp-2">
                   {scene.description}

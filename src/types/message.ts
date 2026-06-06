@@ -98,3 +98,16 @@ export interface WorkspaceScriptContent {
   title?: string
   action?: string
 }
+
+export interface AssetReference {
+  type: string
+  source: 'asset_library' | 'project'
+  uid: string
+  name: string
+  url?: string
+  summary?: string
+}
+
+export interface UserTextContent {
+  references?: AssetReference[]
+}

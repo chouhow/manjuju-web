@@ -1,31 +1,157 @@
-import { useState, useRef, KeyboardEvent } from 'react'
+import { useState, useRef } from 'react'
 import { Button, Upload, Tooltip } from 'antd'
-import { Send, Paperclip, Image as ImageIcon, Square, Loader2 } from 'lucide-react'
+import { Send, Paperclip, Image as ImageIcon, Square, Loader2, Library } from 'lucide-react'
 import { useChatStore } from '@/stores/chatStore'
 import { conversationApi } from '@/api/conversation'
+import type { AssetReference } from '@/types/message'
+import AssetReferencePicker from './AssetReferencePicker'
 
 interface Props {
-  onSend: (text: string) => void
+  onSend: (text: string, references?: AssetReference[]) => void
   onStop: () => void
   isLoading: boolean
   isStreaming: boolean
 }
 
+function createTagNode(ref: AssetReference): HTMLSpanElement {
+  const span = document.createElement('span')
+  span.className =
+    'asset-tag inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full mx-0.5 align-middle cursor-default select-none'
+  span.contentEditable = 'false'
+  span.dataset.type = ref.type
+  span.dataset.uid = ref.uid
+  span.dataset.source = ref.source
+  span.dataset.name = ref.name
+  span.dataset.url = ref.url || ''
+  span.dataset.summary = ref.summary || ''
+
+  const typeLabel = ref.type === 'character' ? '角色' : ref.type === 'scene' ? '场景' : ref.type
+  const sourceIcon = ref.source === 'asset_library' ? '📚' : '📁'
+  span.innerHTML = `<span>${sourceIcon}</span><span>${typeLabel}:${ref.name}</span>`
+  return span
+}
+
+function extractContent(editor: HTMLDivElement): { text: string; references: AssetReference[] } {
+  let text = ''
+  const references: AssetReference[] = []
+
+  const walk = (node: Node) => {
+    node.childNodes.forEach((child) => {
+      if (child.nodeType === Node.TEXT_NODE) {
+        text += child.textContent
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        const el = child as HTMLElement
+        if (el.tagName === 'BR') {
+          text += '\n'
+        } else if (el.classList.contains('asset-tag')) {
+          references.push({
+            type: el.dataset.type!,
+            source: el.dataset.source as 'asset_library' | 'project',
+            uid: el.dataset.uid!,
+            name: el.dataset.name!,
+            url: el.dataset.url || undefined,
+            summary: el.dataset.summary || undefined,
+          })
+          text += `【${el.dataset.type}:${el.dataset.name}】`
+        } else {
+          walk(child)
+        }
+      }
+    })
+  }
+
+  walk(editor)
+  return { text: text.trim(), references }
+}
+
 export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Props) {
-  const [text, setText] = useState('')
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [isEmpty, setIsEmpty] = useState(true)
+  const editorRef = useRef<HTMLDivElement>(null)
   const { currentConversationId } = useChatStore()
 
-  const handleSend = () => {
-    if (!text.trim() || isLoading) return
-    onSend(text.trim())
-    setText('')
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
+  const checkEmpty = () => {
+    const editor = editorRef.current
+    if (!editor) return
+    const hasText = !!editor.textContent?.trim()
+    const hasTags = editor.querySelectorAll('.asset-tag').length > 0
+    setIsEmpty(!hasText && !hasTags)
+  }
+
+  const insertTag = (ref: AssetReference) => {
+    const editor = editorRef.current
+    if (!editor) return
+
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) {
+      // 无焦点，追加到末尾
+      editor.appendChild(createTagNode(ref))
+      editor.appendChild(document.createTextNode('\u00A0'))
+      checkEmpty()
+      return
+    }
+
+    const range = selection.getRangeAt(0)
+    if (!editor.contains(range.commonAncestorContainer)) {
+      // 选区不在编辑器内，追加到末尾
+      editor.appendChild(createTagNode(ref))
+      editor.appendChild(document.createTextNode('\u00A0'))
+      checkEmpty()
+      return
+    }
+
+    range.deleteContents()
+    const tag = createTagNode(ref)
+    range.insertNode(tag)
+
+    // 光标移到 tag 后面，并插入一个不换行空格
+    range.setStartAfter(tag)
+    range.setEndAfter(tag)
+    const space = document.createTextNode('\u00A0')
+    range.insertNode(space)
+    range.setStartAfter(space)
+    range.setEndAfter(space)
+
+    selection.removeAllRanges()
+    selection.addRange(range)
+    checkEmpty()
+  }
+
+  const handleAddReferences = (newRefs: AssetReference[]) => {
+    const editor = editorRef.current
+    if (!editor) return
+
+    // 去重：已存在的 uid 不重复插入
+    const existingUids = new Set(
+      Array.from(editor.querySelectorAll('.asset-tag')).map(
+        (el) => `${(el as HTMLElement).dataset.type}:${(el as HTMLElement).dataset.uid}`
+      )
+    )
+
+    for (const ref of newRefs) {
+      const key = `${ref.type}:${ref.uid}`
+      if (!existingUids.has(key)) {
+        insertTag(ref)
+        existingUids.add(key)
+      }
     }
   }
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleSend = () => {
+    const editor = editorRef.current
+    if (!editor || isEmpty || isLoading) return
+
+    const { text, references } = extractContent(editor)
+    if (!text && references.length === 0) return
+
+    onSend(text, references.length > 0 ? references : undefined)
+
+    // 清空编辑器
+    editor.innerHTML = ''
+    setIsEmpty(true)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (isStreaming) {
@@ -36,19 +162,17 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Pr
     }
   }
 
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(e.target.value)
-    // 自动调整高度
-    const textarea = e.target
-    textarea.style.height = 'auto'
-    textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px'
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const plain = e.clipboardData.getData('text/plain')
+    document.execCommand('insertText', false, plain)
   }
 
   const handleFileUpload = async (file: File) => {
     if (!currentConversationId) return false
     try {
       await conversationApi.uploadFile(currentConversationId, file)
-      return false // 阻止默认上传行为
+      return false
     } catch {
       return false
     }
@@ -68,19 +192,30 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Pr
     <div className="border-t border-gray-200 bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-3">
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={handleTextareaChange}
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={checkEmpty}
             onKeyDown={handleKeyDown}
-            placeholder="输入消息... (Shift+Enter换行, Enter发送)"
-            className="w-full resize-none outline-none text-gray-700 bg-transparent min-h-[24px] max-h-[200px]"
-            rows={1}
-            disabled={isLoading}
+            onPaste={handlePaste}
+            className="w-full outline-none text-gray-700 bg-transparent min-h-[24px] max-h-[200px] overflow-y-auto whitespace-pre-wrap empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
+            data-placeholder="输入消息... (Shift+Enter换行, Enter发送)"
+            style={{ wordBreak: 'break-word' }}
           />
 
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-center gap-1">
+              <Tooltip title="引用资产">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<Library size={18} className="text-gray-500" />}
+                  className="!text-gray-500 hover:!text-indigo-600"
+                  onClick={() => setPickerOpen(true)}
+                />
+              </Tooltip>
+
               <Upload
                 beforeUpload={handleFileUpload}
                 showUploadList={false}
@@ -127,7 +262,7 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Pr
                 size="small"
                 icon={isLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                 onClick={handleSend}
-                disabled={!text.trim() || isLoading}
+                disabled={isEmpty || isLoading}
                 className="!rounded-lg"
               >
                 发送
@@ -136,6 +271,12 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Pr
           </div>
         </div>
       </div>
+
+      <AssetReferencePicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={handleAddReferences}
+      />
     </div>
   )
 }
