@@ -110,6 +110,7 @@ function App() {
                   </PrivateRoute>
                 }
               />
+              <Route path="/space/:dramaId" element={<ChatPage />} />
               <Route
                 path="/styles"
                 element={

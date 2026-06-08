@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
 import type { ChatMessage } from '@/types/message'
 import type { TaskContent } from '@/types/message'
@@ -10,16 +9,6 @@ interface Props {
 export default function TaskMessage({ message }: Props) {
   const content = message.content as TaskContent | null
   const status = content?.status || 'in_progress'
-  const [show, setShow] = useState(true)
-
-  useEffect(() => {
-    if (status === 'completed') {
-      const timer = setTimeout(() => setShow(false), 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [status])
-
-  if (!show) return null
 
   const statusConfig = {
     in_progress: {

@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, message } from 'antd'
 import { dramaApi } from '@/api/drama'
+import { shareApi } from '@/api/share'
 import { conversationApi } from '@/api/conversation'
 import { useDramaStore } from '@/stores/dramaStore'
 import { useChatStore } from '@/stores/chatStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { streamSSE } from '@/utils/sseParser'
+import type { SSEMessage } from '@/types/message'
 import AppHeader from '@/components/common/AppHeader'
 import AppSidebar from '@/components/common/AppSidebar'
 import ChatContainer from '@/components/chat/ChatContainer'
@@ -17,10 +20,23 @@ export default function ChatPage() {
     conversationId: string
   }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const shareToken = searchParams.get('shareToken')
+  const isReadOnly = Boolean(shareToken)
+
   const { dramas, setDramas, setCurrentDrama } = useDramaStore()
-  const { setCurrentConversation, setMessages, clearMessages } = useChatStore()
-  const { reset: resetWorkspace, setCharacters, setScenes, setScript, setStoryboards } =
-    useWorkspaceStore()
+  const { setCurrentConversation, setMessages, clearMessages, appendMessage } = useChatStore()
+  const {
+    reset: resetWorkspace,
+    setCharacters,
+    setScenes,
+    setScript,
+    setStoryboards,
+    updateCharacters,
+    updateScenes,
+    updateScript,
+    updateStoryboard,
+  } = useWorkspaceStore()
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -30,11 +46,89 @@ export default function ChatPage() {
       clearMessages()
       resetWorkspace()
     }
-  }, [dramaId, conversationId])
+  }, [dramaId, conversationId, shareToken])
+
+  // 分享预览模式：建立实时 SSE 订阅
+  useEffect(() => {
+    if (!isReadOnly || !shareToken) return
+
+    let active = true
+    let abortCtrl: AbortController | null = null
+
+    const handleWorkspaceMessage = (msg: SSEMessage) => {
+      if (!msg.content) return
+      switch (msg.msg_type) {
+        case 'workspace_character':
+          updateCharacters(msg.content as never)
+          break
+        case 'workspace_scene':
+          updateScenes(msg.content as never)
+          break
+        case 'workspace_script':
+          updateScript(msg.content as never)
+          break
+        case 'workspace_storyboard':
+          updateStoryboard(msg.content as never)
+          break
+      }
+    }
+
+    const connect = async () => {
+      while (active) {
+        abortCtrl = new AbortController()
+        try {
+          const response = await shareApi.stream(shareToken, abortCtrl.signal)
+          for await (const msg of streamSSE(response)) {
+            if (!active) break
+            if (msg.sender === 'workspace') {
+              handleWorkspaceMessage(msg)
+            } else {
+              appendMessage(msg)
+            }
+          }
+        } catch {
+          // 连接断开或被取消，继续重连
+        } finally {
+          abortCtrl = null
+        }
+
+        if (!active) break
+        // 收到 [DONE] 或连接断开，延迟后自动重连
+        await new Promise((r) => setTimeout(r, 500))
+      }
+    }
+
+    connect()
+
+    return () => {
+      active = false
+      abortCtrl?.abort()
+    }
+  }, [isReadOnly, shareToken])
 
   const loadDramaData = async () => {
     setIsLoading(true)
     try {
+      if (isReadOnly && shareToken) {
+        // 分享预览模式：通过 shareToken 加载只读数据
+        const preview = await shareApi.preview(shareToken)
+
+        setCurrentDrama({
+          ...preview.drama,
+          user_id: '',
+          updated_at: preview.drama.created_at || '',
+        } as never)
+
+        setMessages(
+          preview.messages.map((m) => ({ ...m, isStreaming: false }))
+        )
+        setCharacters(preview.characters as never[])
+        setScenes(preview.scenes as never[])
+        setScript(preview.script as never)
+        setStoryboards(preview.storyboards as never[])
+        return
+      }
+
       // 加载漫剧列表（用于侧边栏）
       if (dramas.length === 0) {
         const dramaList = await dramaApi.list()
@@ -96,9 +190,9 @@ export default function ChatPage() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <AppHeader />
       <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
-        <AppSidebar />
+        {!isReadOnly && <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
-          <ChatContainer />
+          <ChatContainer readOnly={isReadOnly} />
         </div>
         <WorkspacePanel />
       </div>

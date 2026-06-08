@@ -1,19 +1,26 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
+import { Button } from 'antd'
 import { useChatStore } from '@/stores/chatStore'
 import { useDramaStore } from '@/stores/dramaStore'
 import { useSSEChat } from '@/hooks/useSSEChat'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { Film, Users, Mountain, Clapperboard } from 'lucide-react'
+import { Film, Users, Mountain, Clapperboard, Share2 } from 'lucide-react'
 import type { AssetReference } from '@/types/message'
 import ChatMessageList from './ChatMessageList'
 import ChatInput from './ChatInput'
+import ShareModal from '@/components/share/ShareModal'
 
-export default function ChatContainer() {
+interface ChatContainerProps {
+  readOnly?: boolean
+}
+
+export default function ChatContainer({ readOnly }: ChatContainerProps) {
   const { messages, currentConversationId, isStreaming } = useChatStore()
   const { currentDrama } = useDramaStore()
   const { characters, scenes, storyboards } = useWorkspaceStore()
   const { sendMessage, stop, isLoading } = useSSEChat()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
 
   // 自动滚动到底部
   useEffect(() => {
@@ -58,6 +65,17 @@ export default function ChatContainer() {
             <Clapperboard size={12} />
             {storyboards.length}
           </span>
+          {!readOnly && currentDrama?.drama_id && (
+            <Button
+              type="text"
+              size="small"
+              icon={<Share2 size={14} />}
+              className="text-gray-400 hover:text-indigo-600 ml-1"
+              onClick={() => setShareModalOpen(true)}
+            >
+              分享
+            </Button>
+          )}
         </div>
       </div>
 
@@ -68,12 +86,22 @@ export default function ChatContainer() {
       </div>
 
       {/* 输入框 */}
-      <ChatInput
-        onSend={handleSend}
-        onStop={handleStop}
-        isLoading={isLoading}
-        isStreaming={isStreaming}
-      />
+      {!readOnly && (
+        <ChatInput
+          onSend={handleSend}
+          onStop={handleStop}
+          isLoading={isLoading}
+          isStreaming={isStreaming}
+        />
+      )}
+
+      {currentDrama?.drama_id && (
+        <ShareModal
+          dramaId={currentDrama.drama_id}
+          open={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+        />
+      )}
     </div>
   )
 }
