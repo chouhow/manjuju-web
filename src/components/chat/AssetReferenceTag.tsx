@@ -1,5 +1,5 @@
 import type { AssetReference } from '@/types/message'
-import { X, Library } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface Props {
   reference: AssetReference
