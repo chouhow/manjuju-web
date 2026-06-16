@@ -29,9 +29,15 @@ export default function TaskMessage({ message }: Props) {
       border: 'border-red-200',
       text: 'text-red-700',
     },
+    cancelled: {
+      icon: <XCircle size={18} className="text-gray-500" />,
+      bg: 'bg-gray-50',
+      border: 'border-gray-200',
+      text: 'text-gray-700',
+    },
   }
 
-  const config = statusConfig[status]
+  const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.in_progress
 
   return (
     <div className="flex gap-3">

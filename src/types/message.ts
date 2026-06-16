@@ -12,6 +12,7 @@ export type MessageType =
   | 'stop_reason'
   | 'style'
   | 'style_select'
+  | 'film_config_request'
   | 'workspace_character'
   | 'workspace_scene'
   | 'workspace_script'
@@ -40,7 +41,7 @@ export interface ChatMessage extends SSEMessage {
 
 export interface TaskContent {
   title: string
-  status: 'in_progress' | 'completed' | 'failed'
+  status: 'in_progress' | 'completed' | 'failed' | 'cancelled'
 }
 
 export interface OptionsContent {
@@ -67,6 +68,10 @@ export interface StyleSelectContent {
     name: string
     image_url: string
   }>
+}
+
+export interface FilmConfigRequestContent {
+  // 仅作为信号，无具体字段；前端固定渲染表单
 }
 
 export interface WorkspaceCharacterContent {

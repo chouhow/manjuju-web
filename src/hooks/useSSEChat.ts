@@ -5,6 +5,7 @@ import { useChatStore } from '@/stores/chatStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { SSEMessage, AssetReference } from '@/types/message'
 import type { SelectedStyle } from '@/types/style'
+import type { FilmConfig } from '@/types/chat'
 
 export function useSSEChat() {
   const [isLoading, setIsLoading] = useState(false)
@@ -39,7 +40,8 @@ export function useSSEChat() {
       userInput: string,
       conversationId: string,
       style?: SelectedStyle | null,
-      references?: AssetReference[]
+      references?: AssetReference[],
+      filmConfig?: FilmConfig | null
     ) => {
       if ((!userInput.trim() && !references?.length) || isLoading) return
 
@@ -47,24 +49,13 @@ export function useSSEChat() {
       setIsStreaming(true)
       abortRef.current = new AbortController()
 
-      // 先添加用户消息到列表（乐观更新）
-      const msgContent: Record<string, unknown> | null = references && references.length > 0
-        ? { references }
-        : null
-      appendMessage({
-        sender: 'user',
-        msg_type: 'user_text',
-        text: userInput,
-        content: msgContent,
-        component_id: Date.now(),
-      })
-
       try {
         const response = await chatApi.streamChat({
           user_input: userInput,
           conversation_id: conversationId,
           style: style || undefined,
           references: references && references.length > 0 ? references : undefined,
+          film_config: filmConfig || undefined,
         })
 
         for await (const msg of streamSSE(response)) {

@@ -29,6 +29,7 @@ const messageComponents: Record<string, React.FC<{ message: ChatMessage }>> = {
   handover: HandoverMessage,
   style: StyleMessage,
   style_select: StyleSelectMessage,
+  film_config_request: FilmConfigRequestMessage,
   stop_reason: StopReasonMessage,
 }
 
