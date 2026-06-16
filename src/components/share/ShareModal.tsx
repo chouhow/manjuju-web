@@ -82,7 +82,7 @@ export default function ShareModal({ dramaId, open, onClose }: ShareModalProps) 
       onCancel={onClose}
       footer={null}
       width={520}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="space-y-5">
         {/* 创建新分享 */}

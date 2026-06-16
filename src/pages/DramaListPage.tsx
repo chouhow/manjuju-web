@@ -83,10 +83,15 @@ export default function DramaListPage({ defaultTab = 'all' }: Props) {
               </div>
             </div>
 
-            <Tabs activeKey={activeTab} onChange={(key) => setActiveTab(key as 'all' | 'favorites')} className="mb-4">
-              <Tabs.TabPane tab="全部漫剧" key="all" />
-              <Tabs.TabPane tab="收藏" key="favorites" />
-            </Tabs>
+            <Tabs
+              activeKey={activeTab}
+              onChange={(key) => setActiveTab(key as 'all' | 'favorites')}
+              className="mb-4"
+              items={[
+                { key: 'all', label: '全部漫剧' },
+                { key: 'favorites', label: '收藏' },
+              ]}
+            />
 
             {isLoading ? (
               <div className="flex justify-center py-20">

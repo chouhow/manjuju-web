@@ -158,36 +158,52 @@ export default function AssetReferencePicker({ open, onClose, onSelect }: Props)
         />
       </div>
 
-      <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        <Tabs.TabPane
-          tab={<span className="flex items-center gap-1"><User size={14} />角色资产</span>}
-          key="character"
-        >
-          <Spin spinning={loading}>
-            {filteredCharacters.length === 0 ? (
-              <Empty description="暂无角色资产" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            ) : (
-              <div className="grid grid-cols-2 gap-3 max-h-[360px] overflow-y-auto p-1">
-                {filteredCharacters.map(item => renderAssetCard(item, 'character'))}
-              </div>
-            )}
-          </Spin>
-        </Tabs.TabPane>
-        <Tabs.TabPane
-          tab={<span className="flex items-center gap-1"><Mountain size={14} />场景资产</span>}
-          key="scene"
-        >
-          <Spin spinning={loading}>
-            {filteredScenes.length === 0 ? (
-              <Empty description="暂无场景资产" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            ) : (
-              <div className="grid grid-cols-2 gap-3 max-h-[360px] overflow-y-auto p-1">
-                {filteredScenes.map(item => renderAssetCard(item, 'scene'))}
-              </div>
-            )}
-          </Spin>
-        </Tabs.TabPane>
-      </Tabs>
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: 'character',
+            label: (
+              <span className="flex items-center gap-1">
+                <User size={14} />
+                角色资产
+              </span>
+            ),
+            children: (
+              <Spin spinning={loading}>
+                {filteredCharacters.length === 0 ? (
+                  <Empty description="暂无角色资产" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 max-h-[360px] overflow-y-auto p-1">
+                    {filteredCharacters.map(item => renderAssetCard(item, 'character'))}
+                  </div>
+                )}
+              </Spin>
+            ),
+          },
+          {
+            key: 'scene',
+            label: (
+              <span className="flex items-center gap-1">
+                <Mountain size={14} />
+                场景资产
+              </span>
+            ),
+            children: (
+              <Spin spinning={loading}>
+                {filteredScenes.length === 0 ? (
+                  <Empty description="暂无场景资产" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 max-h-[360px] overflow-y-auto p-1">
+                    {filteredScenes.map(item => renderAssetCard(item, 'scene'))}
+                  </div>
+                )}
+              </Spin>
+            ),
+          },
+        ]}
+      />
 
       {selected.size > 0 && (
         <div className="mt-4 pt-3 border-t border-gray-100">

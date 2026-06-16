@@ -393,7 +393,7 @@ export default function StyleLibraryPage() {
           setExamplePreviewUrl('')
         }}
         onOk={() => form.submit()}
-        destroyOnClose
+        destroyOnHidden
         width={560}
       >
         <Form

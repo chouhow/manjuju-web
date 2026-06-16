@@ -180,7 +180,7 @@ export default function ChatPage() {
       <div className="min-h-screen flex flex-col">
         <AppHeader />
         <div className="flex-1 flex items-center justify-center">
-          <Spin size="large" tip="加载中..." />
+          <Spin size="large" description="加载中..." />
         </div>
       </div>
     )

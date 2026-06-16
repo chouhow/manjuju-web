@@ -2,15 +2,15 @@ import { Spin } from 'antd'
 import { Film } from 'lucide-react'
 
 interface Props {
-  tip?: string
+  description?: string
   fullScreen?: boolean
 }
 
-export default function LoadingSpinner({ tip = '加载中...', fullScreen = false }: Props) {
+export default function LoadingSpinner({ description = '加载中...', fullScreen = false }: Props) {
   const content = (
     <div className="flex flex-col items-center gap-4">
       <Film size={40} className="text-indigo-300 animate-pulse" />
-      <Spin size="large" tip={tip} />
+      <Spin size="large" description={description} />
     </div>
   )
 

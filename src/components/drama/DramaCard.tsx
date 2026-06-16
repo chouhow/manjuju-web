@@ -42,7 +42,7 @@ export default function DramaCard({ drama, onClick }: Props) {
         hoverable
         className="!rounded-xl overflow-hidden cursor-pointer group"
         onClick={onClick}
-        bodyStyle={{ padding: '16px' }}
+        styles={{ body: { padding: '16px' } }}
         cover={
           <div className="h-40 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center relative overflow-hidden">
             {drama.thumbnail_url ? (

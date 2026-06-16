@@ -37,84 +37,96 @@ export default function LoginPage() {
           <Text className="text-gray-500">AI 漫剧创作平台</Text>
         </div>
 
-        <Tabs activeKey={activeTab} onChange={setActiveTab} centered>
-          <Tabs.TabPane tab="密码登录" key="password">
-            <Form form={form} layout="vertical" onFinish={handleSubmit}>
-              <Form.Item
-                name="email"
-                rules={[{ required: true, message: '请输入邮箱' }]}
-              >
-                <Input
-                  prefix={<MailOutlined />}
-                  placeholder="邮箱"
-                  size="large"
-                />
-              </Form.Item>
-              <Form.Item
-                name="password"
-                rules={[{ required: true, message: '请输入密码' }]}
-              >
-                <Input.Password
-                  prefix={<LockOutlined />}
-                  placeholder="密码"
-                  size="large"
-                />
-              </Form.Item>
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  block
-                  loading={isLoading}
-                >
-                  登录
-                </Button>
-              </Form.Item>
-            </Form>
-          </Tabs.TabPane>
-
-          <Tabs.TabPane tab="验证码登录" key="code">
-            <Form form={form} layout="vertical" onFinish={handleSubmit}>
-              <Form.Item
-                name="phone"
-                rules={[{ required: true, message: '请输入手机号' }]}
-              >
-                <Input
-                  prefix={<MobileOutlined />}
-                  placeholder="手机号"
-                  size="large"
-                />
-              </Form.Item>
-              <Form.Item
-                name="verification_code"
-                rules={[{ required: true, message: '请输入验证码' }]}
-              >
-                <Input
-                  prefix={<MailOutlined />}
-                  placeholder="验证码"
-                  size="large"
-                  suffix={
-                    <Button type="link" size="small">
-                      获取验证码
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          centered
+          items={[
+            {
+              key: 'password',
+              label: '密码登录',
+              children: (
+                <Form form={form} layout="vertical" onFinish={handleSubmit}>
+                  <Form.Item
+                    name="email"
+                    rules={[{ required: true, message: '请输入邮箱' }]}
+                  >
+                    <Input
+                      prefix={<MailOutlined />}
+                      placeholder="邮箱"
+                      size="large"
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="password"
+                    rules={[{ required: true, message: '请输入密码' }]}
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined />}
+                      placeholder="密码"
+                      size="large"
+                    />
+                  </Form.Item>
+                  <Form.Item>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      size="large"
+                      block
+                      loading={isLoading}
+                    >
+                      登录
                     </Button>
-                  }
-                />
-              </Form.Item>
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  block
-                  loading={isLoading}
-                >
-                  登录
-                </Button>
-              </Form.Item>
-            </Form>
-          </Tabs.TabPane>
-        </Tabs>
+                  </Form.Item>
+                </Form>
+              ),
+            },
+            {
+              key: 'code',
+              label: '验证码登录',
+              children: (
+                <Form form={form} layout="vertical" onFinish={handleSubmit}>
+                  <Form.Item
+                    name="phone"
+                    rules={[{ required: true, message: '请输入手机号' }]}
+                  >
+                    <Input
+                      prefix={<MobileOutlined />}
+                      placeholder="手机号"
+                      size="large"
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="verification_code"
+                    rules={[{ required: true, message: '请输入验证码' }]}
+                  >
+                    <Input
+                      prefix={<MailOutlined />}
+                      placeholder="验证码"
+                      size="large"
+                      suffix={
+                        <Button type="link" size="small">
+                          获取验证码
+                        </Button>
+                      }
+                    />
+                  </Form.Item>
+                  <Form.Item>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      size="large"
+                      block
+                      loading={isLoading}
+                    >
+                      登录
+                    </Button>
+                  </Form.Item>
+                </Form>
+              ),
+            },
+          ]}
+        />
 
         <div className="flex justify-between mt-4">
           <Link to="/forgot-password" className="text-indigo-600 hover:text-indigo-800">
