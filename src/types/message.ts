@@ -50,6 +50,11 @@ export interface OptionsContent {
   selected_index: number | null
 }
 
+export interface SelectedOption {
+  component_id: number
+  selected_index: number
+}
+
 export interface HandoverContent {
   inviter: string
   invitee: string

@@ -3,7 +3,7 @@ import { streamSSE } from '@/utils/sseParser'
 import { chatApi } from '@/api/chat'
 import { useChatStore } from '@/stores/chatStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import type { SSEMessage, AssetReference } from '@/types/message'
+import type { SSEMessage, AssetReference, SelectedOption } from '@/types/message'
 import type { SelectedStyle } from '@/types/style'
 import type { FilmConfig } from '@/types/chat'
 
@@ -41,7 +41,8 @@ export function useSSEChat() {
       conversationId: string,
       style?: SelectedStyle | null,
       references?: AssetReference[],
-      filmConfig?: FilmConfig | null
+      filmConfig?: FilmConfig | null,
+      selectedOption?: SelectedOption | null
     ) => {
       if ((!userInput.trim() && !references?.length) || isLoading) return
 
@@ -56,6 +57,7 @@ export function useSSEChat() {
           style: style || undefined,
           references: references && references.length > 0 ? references : undefined,
           film_config: filmConfig || undefined,
+          selected_option: selectedOption || undefined,
         })
 
         for await (const msg of streamSSE(response)) {

@@ -23,9 +23,12 @@ export default function OptionsMessage({ message }: Props) {
   const isSelectable = content.selectable !== false && selectedIndex === null
 
   const handleSelect = async (index: number, item: string) => {
-    if (!isSelectable || !currentConversationId) return
+    if (!isSelectable || !currentConversationId || message.component_id == null) return
     setSelectedIndex(index)
-    await sendMessage(item, currentConversationId)
+    await sendMessage(item, currentConversationId, null, undefined, null, {
+      component_id: message.component_id,
+      selected_index: index,
+    })
   }
 
   return (

@@ -1,7 +1,7 @@
 import { get, post } from './client'
 import { getToken } from '@/utils/storage'
 import type { SelectedStyle } from '@/types/style'
-import type { AssetReference } from '@/types/message'
+import type { AssetReference, SelectedOption } from '@/types/message'
 import type { FilmConfig } from '@/types/chat'
 
 export interface ChatRequest {
@@ -10,6 +10,7 @@ export interface ChatRequest {
   style?: SelectedStyle
   references?: AssetReference[]
   film_config?: FilmConfig
+  selected_option?: SelectedOption
 }
 
 export const chatApi = {
