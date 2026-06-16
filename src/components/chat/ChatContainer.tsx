@@ -6,6 +6,7 @@ import { useSSEChat } from '@/hooks/useSSEChat'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { Film, Users, Mountain, Clapperboard, Share2 } from 'lucide-react'
 import type { AssetReference } from '@/types/message'
+import type { SelectedStyle } from '@/types/style'
 import ChatMessageList from './ChatMessageList'
 import ChatInput from './ChatInput'
 import ShareModal from '@/components/share/ShareModal'
@@ -21,6 +22,7 @@ export default function ChatContainer({ readOnly }: ChatContainerProps) {
   const { sendMessage, stop, isLoading } = useSSEChat()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [selectedStyle, setSelectedStyle] = useState<SelectedStyle | null>(null)
 
   // 自动滚动到底部
   useEffect(() => {
@@ -29,7 +31,7 @@ export default function ChatContainer({ readOnly }: ChatContainerProps) {
 
   const handleSend = async (text: string, references?: AssetReference[]) => {
     if (!currentConversationId) return
-    await sendMessage(text, currentConversationId, undefined, references)
+    await sendMessage(text, currentConversationId, selectedStyle, references)
   }
 
   const handleStop = () => {
@@ -92,6 +94,8 @@ export default function ChatContainer({ readOnly }: ChatContainerProps) {
           onStop={handleStop}
           isLoading={isLoading}
           isStreaming={isStreaming}
+          selectedStyle={selectedStyle}
+          onStyleChange={setSelectedStyle}
         />
       )}
 

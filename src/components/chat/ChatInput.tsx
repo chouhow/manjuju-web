@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react'
 import { Button, Upload, Tooltip, message } from 'antd'
-import { Send, Paperclip, Image as ImageIcon, Square, Loader2, Library } from 'lucide-react'
+import { Send, Paperclip, Image as ImageIcon, Square, Loader2, Library, Palette, X } from 'lucide-react'
 import { useChatStore } from '@/stores/chatStore'
 import { conversationApi } from '@/api/conversation'
 import type { AssetReference } from '@/types/message'
+import type { SelectedStyle } from '@/types/style'
+import StylePickerModal from './StylePickerModal'
 import AssetReferencePicker from './AssetReferencePicker'
 
 interface Props {
@@ -11,6 +13,8 @@ interface Props {
   onStop: () => void
   isLoading: boolean
   isStreaming: boolean
+  selectedStyle?: SelectedStyle | null
+  onStyleChange?: (style: SelectedStyle | null) => void
 }
 
 function createTagNode(ref: AssetReference): HTMLSpanElement {
@@ -64,8 +68,9 @@ function extractContent(editor: HTMLDivElement): { text: string; references: Ass
   return { text: text.trim(), references }
 }
 
-export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Props) {
+export default function ChatInput({ onSend, onStop, isLoading, isStreaming, selectedStyle, onStyleChange }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [stylePickerOpen, setStylePickerOpen] = useState(false)
   const [isEmpty, setIsEmpty] = useState(true)
   const editorRef = useRef<HTMLDivElement>(null)
   const { currentConversationId } = useChatStore()
@@ -196,6 +201,30 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Pr
     <div className="border-t border-gray-200 bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-3">
+          {selectedStyle && (
+            <div className="mb-2 flex items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1">
+                {selectedStyle.image_url && (
+                  <img
+                    src={selectedStyle.image_url}
+                    alt={selectedStyle.style_name}
+                    className="w-5 h-5 rounded object-cover"
+                  />
+                )}
+                <span className="text-xs text-indigo-700 font-medium">
+                  {selectedStyle.style_name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onStyleChange?.(null)}
+                  className="ml-0.5 text-indigo-400 hover:text-indigo-600"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            </div>
+          )}
+
           <div
             ref={editorRef}
             contentEditable
@@ -217,6 +246,16 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Pr
                   icon={<Library size={18} className="text-gray-500" />}
                   className="!text-gray-500 hover:!text-indigo-600"
                   onClick={() => setPickerOpen(true)}
+                />
+              </Tooltip>
+
+              <Tooltip title="选择风格">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<Palette size={18} className={selectedStyle ? 'text-indigo-600' : 'text-gray-500'} />}
+                  className={selectedStyle ? '!text-indigo-600' : '!text-gray-500 hover:!text-indigo-600'}
+                  onClick={() => setStylePickerOpen(true)}
                 />
               </Tooltip>
 
@@ -280,6 +319,12 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Pr
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={handleAddReferences}
+      />
+
+      <StylePickerModal
+        open={stylePickerOpen}
+        onClose={() => setStylePickerOpen(false)}
+        onSelect={(style) => onStyleChange?.(style)}
       />
     </div>
   )
