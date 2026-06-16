@@ -43,9 +43,7 @@ export const styleApi = {
       code: number
       msg: string
       data: Style
-    }>('/styles', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((res) => res.data.data)
+    }>('/styles', formData).then((res) => res.data.data)
   },
 
   update: (
@@ -67,9 +65,7 @@ export const styleApi = {
       code: number
       msg: string
       data: Style
-    }>(`/styles/${uid}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((res) => res.data.data)
+    }>(`/styles/${uid}`, formData).then((res) => res.data.data)
   },
 
   delete: (uid: string) => del<{ deleted: boolean }>(`/styles/${uid}`),
@@ -101,9 +97,7 @@ export const styleApi = {
       code: number
       msg: string
       data: StyleExample
-    }>(`/styles/${styleUid}/examples`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((res) => res.data.data)
+    }>(`/styles/${styleUid}/examples`, formData).then((res) => res.data.data)
   },
 
   deleteExample: (styleUid: string, exampleId: string) =>

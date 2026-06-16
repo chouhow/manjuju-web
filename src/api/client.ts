@@ -5,9 +5,6 @@ import { getToken, removeToken } from '@/utils/storage'
 const client = axios.create({
   baseURL: '/api',
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 client.interceptors.request.use(

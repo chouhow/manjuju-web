@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Button, Upload, Tooltip } from 'antd'
+import { Button, Upload, Tooltip, message } from 'antd'
 import { Send, Paperclip, Image as ImageIcon, Square, Loader2, Library } from 'lucide-react'
 import { useChatStore } from '@/stores/chatStore'
 import { conversationApi } from '@/api/conversation'
@@ -170,6 +170,10 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming }: Pr
 
   const handleFileUpload = async (file: File) => {
     if (!currentConversationId) return false
+    if (file.size > 10 * 1024 * 1024) {
+      message.error('文件大小不能超过 10MB')
+      return false
+    }
     try {
       await conversationApi.uploadFile(currentConversationId, file)
       return false
