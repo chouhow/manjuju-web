@@ -10,7 +10,7 @@ import type { FilmConfig } from '@/types/chat'
 export function useSSEChat() {
   const [isLoading, setIsLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
-  const { appendMessage, setIsStreaming } = useChatStore()
+  const { messages, appendMessage, setIsStreaming } = useChatStore()
   const { updateCharacters, updateScenes, updateScript, updateStoryboard } =
     useWorkspaceStore()
 
@@ -51,13 +51,32 @@ export function useSSEChat() {
       abortRef.current = new AbortController()
 
       try {
+        // 若用户未显式选择 option，但有可选项存在，则发送禁用信号
+        let finalSelectedOption = selectedOption
+        if (!finalSelectedOption) {
+          const latestOptions = [...messages]
+            .reverse()
+            .find(
+              (m) =>
+                m.msg_type === 'options' &&
+                m.component_id != null &&
+                m.content?.selectable === true
+            )
+          if (latestOptions) {
+            finalSelectedOption = {
+              component_id: latestOptions.component_id!,
+              selected_index: null,
+            }
+          }
+        }
+
         const response = await chatApi.streamChat({
           user_input: userInput,
           conversation_id: conversationId,
           style: style || undefined,
           references: references && references.length > 0 ? references : undefined,
           film_config: filmConfig || undefined,
-          selected_option: selectedOption || undefined,
+          selected_option: finalSelectedOption || undefined,
         })
 
         for await (const msg of streamSSE(response)) {

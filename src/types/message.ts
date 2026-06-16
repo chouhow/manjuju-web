@@ -52,7 +52,7 @@ export interface OptionsContent {
 
 export interface SelectedOption {
   component_id: number
-  selected_index: number
+  selected_index: number | null
 }
 
 export interface HandoverContent {
