@@ -10,8 +10,10 @@ import OptionsMessage from './OptionsMessage'
 import HandoverMessage from './HandoverMessage'
 import StyleMessage from './StyleMessage'
 import StyleSelectMessage from './StyleSelectMessage'
+import FilmConfigRequestMessage from './FilmConfigRequestMessage'
 import StopReasonMessage from './StopReasonMessage'
 import TypingIndicator from './TypingIndicator'
+import AgentRoleLabel from './AgentRoleLabel'
 
 interface Props {
   messages: ChatMessage[]
@@ -29,6 +31,8 @@ const messageComponents: Record<string, React.FC<{ message: ChatMessage }>> = {
   style_select: StyleSelectMessage,
   stop_reason: StopReasonMessage,
 }
+
+const centeredMessageTypes = new Set(['handover', 'stop_reason'])
 
 export default function ChatMessageList({ messages }: Props) {
   const { isStreaming } = useChatStore()
@@ -65,6 +69,11 @@ export default function ChatMessageList({ messages }: Props) {
               </motion.div>
             )
           }
+          const showRoleLabel =
+            message.sender === 'ai' &&
+            message.role &&
+            !centeredMessageTypes.has(message.msg_type)
+
           return (
             <motion.div
               key={message.component_id || index}
@@ -72,6 +81,11 @@ export default function ChatMessageList({ messages }: Props) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >
+              {showRoleLabel && (
+                <div className="pl-11 mb-1">
+                  <AgentRoleLabel role={message.role} />
+                </div>
+              )}
               <Component message={message} />
             </motion.div>
           )
