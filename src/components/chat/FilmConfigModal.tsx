@@ -22,10 +22,16 @@ const LANGUAGE_OPTIONS: { label: string; value: FilmConfig['dialogue_language'] 
   { label: '英文', value: 'en' },
 ]
 
+const IMAGE_MODEL_OPTIONS: { label: string; value: FilmConfig['image_model'] }[] = [
+  { label: 'Gemini', value: 'gemini' },
+  { label: 'GPT', value: 'gpt' },
+  { label: 'SeeDream', value: 'seedream' },
+]
+
 export default function FilmConfigModal({ open, onConfirm }: FilmConfigModalProps) {
   const [config, setConfig] = useState<FilmConfig>({})
 
-  const canSubmit = config.film_length && config.film_ratio && config.dialogue_language
+  const canSubmit = config.film_length && config.film_ratio && config.dialogue_language && config.image_model
 
   const handleConfirm = () => {
     if (!canSubmit) return
@@ -90,6 +96,25 @@ export default function FilmConfigModal({ open, onConfirm }: FilmConfigModalProp
                 onClick={() => setConfig((prev) => ({ ...prev, dialogue_language: opt.value }))}
                 className={`rounded-lg border px-4 py-3 text-sm transition ${
                   config.dialogue_language === opt.value
+                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-sm font-medium text-gray-700 mb-3">图片模型</div>
+          <div className="grid grid-cols-3 gap-3">
+            {IMAGE_MODEL_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setConfig((prev) => ({ ...prev, image_model: opt.value }))}
+                className={`rounded-lg border px-4 py-3 text-sm transition ${
+                  config.image_model === opt.value
                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                     : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                 }`}
