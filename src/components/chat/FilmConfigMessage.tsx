@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { Button, Modal } from 'antd'
+import { Button } from 'antd'
+import { useSSEChat } from '@/hooks/useSSEChat'
+import { useChatStore } from '@/stores/chatStore'
 import type { FilmConfig } from '@/types/chat'
 
-interface FilmConfigModalProps {
-  open: boolean
-  onConfirm: (config: FilmConfig) => void
+interface Props {
+  message: {
+    component_id: number | null
+  }
 }
 
 const RATIO_OPTIONS: { label: string; value: FilmConfig['film_ratio'] }[] = [
@@ -23,35 +26,41 @@ const IMAGE_MODEL_OPTIONS: { label: string; value: FilmConfig['image_model'] }[]
   { label: 'SeeDream', value: 'seedream' },
 ]
 
-export default function FilmConfigModal({ open, onConfirm }: FilmConfigModalProps) {
+export default function FilmConfigMessage({ message: _message }: Props) {
+  const { currentConversationId } = useChatStore()
+  const { sendMessage } = useSSEChat()
   const [config, setConfig] = useState<FilmConfig>({})
+  const [submitted, setSubmitted] = useState(false)
 
   const canSubmit = config.film_ratio && config.dialogue_language && config.image_model
 
-  const handleConfirm = () => {
-    if (!canSubmit) return
-    onConfirm(config as Required<FilmConfig>)
+  const handleConfirm = async () => {
+    if (!canSubmit || !currentConversationId) return
+    setSubmitted(true)
+    await sendMessage('已配置影片参数', currentConversationId, null, undefined, config)
+  }
+
+  if (submitted) {
+    return (
+      <div className="inline-block rounded-2xl bg-gray-100 px-4 py-2 text-sm text-gray-500">
+        信息已确认
+      </div>
+    )
   }
 
   return (
-    <Modal
-      open={open}
-      title="影片配置"
-      footer={null}
-      closable={false}
-      maskClosable={false}
-      centered
-      destroyOnClose
-    >
-      <div className="space-y-6 py-2">
+    <div className="max-w-md rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+      <div className="text-sm text-gray-800 mb-4">请先配置影片生成参数，再选择风格。</div>
+
+      <div className="space-y-5">
         <div>
-          <div className="text-sm font-medium text-gray-700 mb-3">影片比例</div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="text-xs font-medium text-gray-500 mb-2">影片比例</div>
+          <div className="grid grid-cols-2 gap-2">
             {RATIO_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setConfig((prev) => ({ ...prev, film_ratio: opt.value }))}
-                className={`rounded-lg border px-4 py-3 text-sm transition ${
+                className={`rounded-lg border px-3 py-2 text-sm transition ${
                   config.film_ratio === opt.value
                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                     : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
@@ -64,13 +73,13 @@ export default function FilmConfigModal({ open, onConfirm }: FilmConfigModalProp
         </div>
 
         <div>
-          <div className="text-sm font-medium text-gray-700 mb-3">对白语言</div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="text-xs font-medium text-gray-500 mb-2">对白语言</div>
+          <div className="grid grid-cols-2 gap-2">
             {LANGUAGE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setConfig((prev) => ({ ...prev, dialogue_language: opt.value }))}
-                className={`rounded-lg border px-4 py-3 text-sm transition ${
+                className={`rounded-lg border px-3 py-2 text-sm transition ${
                   config.dialogue_language === opt.value
                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                     : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
@@ -83,13 +92,13 @@ export default function FilmConfigModal({ open, onConfirm }: FilmConfigModalProp
         </div>
 
         <div>
-          <div className="text-sm font-medium text-gray-700 mb-3">图片模型</div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="text-xs font-medium text-gray-500 mb-2">图片模型</div>
+          <div className="grid grid-cols-3 gap-2">
             {IMAGE_MODEL_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setConfig((prev) => ({ ...prev, image_model: opt.value }))}
-                className={`rounded-lg border px-4 py-3 text-sm transition ${
+                className={`rounded-lg border px-3 py-2 text-sm transition ${
                   config.image_model === opt.value
                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                     : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
@@ -111,6 +120,6 @@ export default function FilmConfigModal({ open, onConfirm }: FilmConfigModalProp
           确认并继续
         </Button>
       </div>
-    </Modal>
+    </div>
   )
 }
