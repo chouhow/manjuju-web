@@ -3,7 +3,9 @@ import type { Storyboard } from '@/types/storyboard'
 
 export const storyboardApi = {
   list: (dramaId: string) =>
-    get<Storyboard[]>(`/dramas/${dramaId}/storyboards`),
+    get<{ storyboards: Storyboard[] }>(`/dramas/${dramaId}/storyboards`).then(
+      (res) => res.storyboards
+    ),
 
   create: (dramaId: string, data: Partial<Storyboard>) =>
     post<Storyboard>(`/dramas/${dramaId}/storyboards`, data),

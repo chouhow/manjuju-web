@@ -2,7 +2,8 @@ import { useRef, useCallback, useState } from 'react'
 import { streamSSE } from '@/utils/sseParser'
 import { chatApi } from '@/api/chat'
 import { useChatStore } from '@/stores/chatStore'
-import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useDramaStore } from '@/stores/dramaStore'
+import { refreshWorkspace } from '@/utils/refreshWorkspace'
 import type { SSEMessage, AssetReference, SelectedOption } from '@/types/message'
 import type { SelectedStyle } from '@/types/style'
 import type { FilmConfig } from '@/types/chat'
@@ -11,28 +12,15 @@ export function useSSEChat() {
   const [isLoading, setIsLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const { messages, appendMessage, setIsStreaming } = useChatStore()
-  const { updateCharacters, updateScenes, updateScript, updateStoryboard } =
-    useWorkspaceStore()
+  const { currentDrama } = useDramaStore()
 
   const handleWorkspaceMessage = useCallback(
     (msg: SSEMessage) => {
-      if (!msg.content) return
-      switch (msg.msg_type) {
-        case 'workspace_character':
-          updateCharacters(msg.content as never)
-          break
-        case 'workspace_scene':
-          updateScenes(msg.content as never)
-          break
-        case 'workspace_script':
-          updateScript(msg.content as never)
-          break
-        case 'workspace_storyboard':
-          updateStoryboard(msg.content as never)
-          break
-      }
+      const dramaId = currentDrama?.drama_id
+      if (!dramaId) return
+      refreshWorkspace(dramaId, msg.msg_type)
     },
-    [updateCharacters, updateScenes, updateScript, updateStoryboard]
+    [currentDrama]
   )
 
   const sendMessage = useCallback(

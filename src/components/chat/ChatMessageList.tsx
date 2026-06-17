@@ -10,7 +10,7 @@ import OptionsMessage from './OptionsMessage'
 import HandoverMessage from './HandoverMessage'
 import StyleMessage from './StyleMessage'
 import StyleSelectMessage from './StyleSelectMessage'
-import FilmConfigRequestMessage from './FilmConfigRequestMessage'
+import FilmConfigMessage from './FilmConfigMessage'
 import StopReasonMessage from './StopReasonMessage'
 import TypingIndicator from './TypingIndicator'
 import AgentRoleLabel from './AgentRoleLabel'
@@ -29,7 +29,7 @@ const messageComponents: Record<string, React.FC<{ message: ChatMessage }>> = {
   handover: HandoverMessage,
   style: StyleMessage,
   style_select: StyleSelectMessage,
-  film_config_request: FilmConfigRequestMessage,
+  film_config: FilmConfigMessage,
   stop_reason: StopReasonMessage,
 }
 

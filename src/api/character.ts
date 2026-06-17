@@ -3,7 +3,9 @@ import type { Character } from '@/types/character'
 
 export const characterApi = {
   list: (dramaId: string) =>
-    get<Character[]>(`/dramas/${dramaId}/characters`),
+    get<{ characters: Character[] }>(`/dramas/${dramaId}/characters`).then(
+      (res) => res.characters
+    ),
 
   create: (dramaId: string, data: Partial<Character>) =>
     post<Character>(`/dramas/${dramaId}/characters`, data),

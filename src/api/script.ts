@@ -2,7 +2,8 @@ import { get, post, put, del } from './client'
 import type { Script } from '@/types/script'
 
 export const scriptApi = {
-  get: (dramaId: string) => get<Script>(`/dramas/${dramaId}/script`),
+  get: (dramaId: string) =>
+    get<{ script: Script }>(`/dramas/${dramaId}/script`).then((res) => res.script),
 
   getHistory: (dramaId: string) =>
     get<unknown[]>(`/dramas/${dramaId}/scripts/history`),

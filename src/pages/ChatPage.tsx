@@ -8,6 +8,7 @@ import { useDramaStore } from '@/stores/dramaStore'
 import { useChatStore } from '@/stores/chatStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { streamSSE } from '@/utils/sseParser'
+import { refreshWorkspace } from '@/utils/refreshWorkspace'
 import type { SSEMessage } from '@/types/message'
 import AppHeader from '@/components/common/AppHeader'
 import AppSidebar from '@/components/common/AppSidebar'
@@ -32,10 +33,6 @@ export default function ChatPage() {
     setScenes,
     setScript,
     setStoryboards,
-    updateCharacters,
-    updateScenes,
-    updateScript,
-    updateStoryboard,
   } = useWorkspaceStore()
   const [isLoading, setIsLoading] = useState(true)
 
@@ -56,21 +53,9 @@ export default function ChatPage() {
     let abortCtrl: AbortController | null = null
 
     const handleWorkspaceMessage = (msg: SSEMessage) => {
-      if (!msg.content) return
-      switch (msg.msg_type) {
-        case 'workspace_character':
-          updateCharacters(msg.content as never)
-          break
-        case 'workspace_scene':
-          updateScenes(msg.content as never)
-          break
-        case 'workspace_script':
-          updateScript(msg.content as never)
-          break
-        case 'workspace_storyboard':
-          updateStoryboard(msg.content as never)
-          break
-      }
+      const dramaId = useDramaStore.getState().currentDrama?.drama_id
+      if (!dramaId) return
+      refreshWorkspace(dramaId, msg.msg_type)
     }
 
     const connect = async () => {

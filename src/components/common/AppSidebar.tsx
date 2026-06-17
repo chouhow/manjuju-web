@@ -8,6 +8,7 @@ import {
   Plus,
   MessageSquare,
   Palette,
+  Upload,
 } from 'lucide-react'
 import { useDramaStore } from '@/stores/dramaStore'
 import { useState } from 'react'
@@ -45,6 +46,11 @@ export default function AppSidebar() {
       key: '/recycled',
       icon: <Trash2 size={18} />,
       label: '回收站',
+    },
+    {
+      key: '/test/upload',
+      icon: <Upload size={18} />,
+      label: '上传测试',
     },
   ]
 

@@ -72,6 +72,8 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming, sele
   const [pickerOpen, setPickerOpen] = useState(false)
   const [stylePickerOpen, setStylePickerOpen] = useState(false)
   const [isEmpty, setIsEmpty] = useState(true)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
   const { currentConversationId } = useChatStore()
 
@@ -142,11 +144,30 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming, sele
     }
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const editor = editorRef.current
-    if (!editor || isEmpty || isLoading) return
+    if (!editor || (isEmpty && !pendingFile) || isLoading) return
 
     const { text, references } = extractContent(editor)
+
+    // 有剧本附件时：先上传，成功后发送默认消息
+    if (pendingFile) {
+      if (!currentConversationId) return
+      setIsUploading(true)
+      try {
+        await conversationApi.uploadFile(currentConversationId, pendingFile)
+        onSend('根据剧本生成视频', references.length > 0 ? references : undefined)
+        editor.innerHTML = ''
+        setPendingFile(null)
+        setIsEmpty(true)
+      } catch {
+        message.error('剧本上传失败，请重试')
+      } finally {
+        setIsUploading(false)
+      }
+      return
+    }
+
     if (!text && references.length === 0) return
 
     onSend(text, references.length > 0 ? references : undefined)
@@ -173,18 +194,14 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming, sele
     document.execCommand('insertText', false, plain)
   }
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = (file: File) => {
     if (!currentConversationId) return false
     if (file.size > 10 * 1024 * 1024) {
       message.error('文件大小不能超过 10MB')
       return false
     }
-    try {
-      await conversationApi.uploadFile(currentConversationId, file)
-      return false
-    } catch {
-      return false
-    }
+    setPendingFile(file)
+    return false
   }
 
   const handleImageUpload = async (file: File) => {
@@ -218,6 +235,23 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming, sele
                   type="button"
                   onClick={() => onStyleChange?.(null)}
                   className="ml-0.5 text-indigo-400 hover:text-indigo-600"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {pendingFile && (
+            <div className="mb-2 flex items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-lg px-2 py-1">
+                <span className="text-xs text-gray-700 font-medium">
+                  {pendingFile.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPendingFile(null)}
+                  className="ml-0.5 text-gray-400 hover:text-gray-600"
                 >
                   <X size={12} />
                 </button>
@@ -303,12 +337,12 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming, sele
               <Button
                 type="primary"
                 size="small"
-                icon={isLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                icon={isUploading || isLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                 onClick={handleSend}
-                disabled={isEmpty || isLoading}
+                disabled={(!pendingFile && isEmpty) || isLoading || isUploading}
                 className="!rounded-lg"
               >
-                发送
+                {isUploading ? '上传中' : '发送'}
               </Button>
             )}
           </div>

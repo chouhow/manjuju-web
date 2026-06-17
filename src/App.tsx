@@ -12,6 +12,7 @@ import ChatPage from '@/pages/ChatPage'
 import SettingsPage from '@/pages/SettingsPage'
 import StyleLibraryPage from '@/pages/StyleLibraryPage'
 import RecycledPage from '@/pages/RecycledPage'
+import UploadTestPage from '@/pages/UploadTestPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
 const queryClient = new QueryClient({
@@ -124,6 +125,14 @@ function App() {
                 element={
                   <PrivateRoute>
                     <SettingsPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/test/upload"
+                element={
+                  <PrivateRoute>
+                    <UploadTestPage />
                   </PrivateRoute>
                 }
               />

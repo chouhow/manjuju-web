@@ -2,7 +2,8 @@ import { get, post, put, del } from './client'
 import type { Scene } from '@/types/scene'
 
 export const sceneApi = {
-  list: (dramaId: string) => get<Scene[]>(`/dramas/${dramaId}/scenes`),
+  list: (dramaId: string) =>
+    get<{ scenes: Scene[] }>(`/dramas/${dramaId}/scenes`).then((res) => res.scenes),
 
   create: (dramaId: string, data: Partial<Scene>) =>
     post<Scene>(`/dramas/${dramaId}/scenes`, data),

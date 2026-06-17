@@ -12,7 +12,7 @@ export type MessageType =
   | 'stop_reason'
   | 'style'
   | 'style_select'
-  | 'film_config_request'
+  | 'film_config'
   | 'workspace_character'
   | 'workspace_scene'
   | 'workspace_script'
@@ -75,7 +75,7 @@ export interface StyleSelectContent {
   }>
 }
 
-export interface FilmConfigRequestContent {
+export interface FilmConfigContent {
   // 仅作为信号，无具体字段；前端固定渲染表单
 }
 
