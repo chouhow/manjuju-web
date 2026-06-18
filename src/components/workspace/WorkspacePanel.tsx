@@ -101,7 +101,7 @@ export default function WorkspacePanel() {
   }
 
   return (
-    <div className="w-96 bg-white border-l border-gray-200 flex flex-col relative">
+    <div className="w-96 h-full bg-white border-l border-gray-200 flex flex-col relative overflow-hidden">
       <Button
         type="text"
         size="small"
@@ -121,7 +121,7 @@ export default function WorkspacePanel() {
         activeKey={activeTab}
         onChange={(key) => setActiveTab(key as typeof activeTab)}
         items={tabItems}
-        className="flex-1"
+        className="flex-1 overflow-hidden workspace-tabs"
         tabBarStyle={{ padding: '0 16px', margin: 0 }}
       />
     </div>

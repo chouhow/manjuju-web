@@ -172,11 +172,11 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       <AppHeader />
-      <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
+      <div className="flex flex-1 overflow-hidden">
         {!isReadOnly && <AppSidebar />}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <ChatContainer readOnly={isReadOnly} />
         </div>
         <WorkspacePanel />

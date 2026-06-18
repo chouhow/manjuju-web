@@ -68,3 +68,27 @@
     background-color: var(--color-surface-400);
   }
 }
+
+.workspace-tabs {
+  display: flex;
+  flex-direction: column;
+}
+
+.workspace-tabs .ant-tabs-nav {
+  flex-shrink: 0;
+}
+
+.workspace-tabs .ant-tabs-content-holder {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.workspace-tabs .ant-tabs-content {
+  height: 100%;
+}
+
+.workspace-tabs .ant-tabs-tabpane {
+  height: 100%;
+  overflow-y: auto;
+}

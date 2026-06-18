@@ -4,12 +4,13 @@ import { useChatStore } from '@/stores/chatStore'
 import { useDramaStore } from '@/stores/dramaStore'
 import { useSSEChat } from '@/hooks/useSSEChat'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { Film, Users, Mountain, Clapperboard, Share2 } from 'lucide-react'
+import { Film, Users, Mountain, Clapperboard, Share2, Images } from 'lucide-react'
 import type { AssetReference } from '@/types/message'
 import type { SelectedStyle } from '@/types/style'
 import ChatMessageList from './ChatMessageList'
 import ChatInput from './ChatInput'
 import ShareModal from '@/components/share/ShareModal'
+import ProjectMediaModal from '@/components/media/ProjectMediaModal'
 
 interface ChatContainerProps {
   readOnly?: boolean
@@ -22,6 +23,7 @@ export default function ChatContainer({ readOnly }: ChatContainerProps) {
   const { sendMessage, stop, isLoading } = useSSEChat()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [mediaModalOpen, setMediaModalOpen] = useState(false)
   const [selectedStyle, setSelectedStyle] = useState<SelectedStyle | null>(null)
 
   // 自动滚动到底部
@@ -40,7 +42,7 @@ export default function ChatContainer({ readOnly }: ChatContainerProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* 顶部标题栏 */}
       <div className="border-b border-gray-100 px-4 py-3 flex items-center justify-between bg-white">
         <div className="flex items-center gap-3 min-w-0">
@@ -68,21 +70,32 @@ export default function ChatContainer({ readOnly }: ChatContainerProps) {
             {storyboards.length}
           </span>
           {!readOnly && currentDrama?.drama_id && (
-            <Button
-              type="text"
-              size="small"
-              icon={<Share2 size={14} />}
-              className="text-gray-400 hover:text-indigo-600 ml-1"
-              onClick={() => setShareModalOpen(true)}
-            >
-              分享
-            </Button>
+            <>
+              <Button
+                type="text"
+                size="small"
+                icon={<Images size={14} />}
+                className="text-gray-400 hover:text-indigo-600 ml-1"
+                onClick={() => setMediaModalOpen(true)}
+              >
+                项目资源
+              </Button>
+              <Button
+                type="text"
+                size="small"
+                icon={<Share2 size={14} />}
+                className="text-gray-400 hover:text-indigo-600 ml-1"
+                onClick={() => setShareModalOpen(true)}
+              >
+                分享
+              </Button>
+            </>
           )}
         </div>
       </div>
 
       {/* 消息列表 */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin p-4">
         <ChatMessageList messages={messages} />
         <div ref={messagesEndRef} />
       </div>
@@ -100,11 +113,18 @@ export default function ChatContainer({ readOnly }: ChatContainerProps) {
       )}
 
       {currentDrama?.drama_id && (
-        <ShareModal
-          dramaId={currentDrama.drama_id}
-          open={shareModalOpen}
-          onClose={() => setShareModalOpen(false)}
-        />
+        <>
+          <ProjectMediaModal
+            dramaId={currentDrama.drama_id}
+            open={mediaModalOpen}
+            onClose={() => setMediaModalOpen(false)}
+          />
+          <ShareModal
+            dramaId={currentDrama.drama_id}
+            open={shareModalOpen}
+            onClose={() => setShareModalOpen(false)}
+          />
+        </>
       )}
     </div>
   )
