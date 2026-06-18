@@ -75,8 +75,20 @@ export interface StyleSelectContent {
   }>
 }
 
+export interface FilmConfigOptionItem {
+  value: string
+  label: string
+}
+
+export interface FilmConfigOption {
+  key: string
+  label: string
+  options: FilmConfigOptionItem[]
+  selected_value: string | null
+}
+
 export interface FilmConfigContent {
-  // 仅作为信号，无具体字段；前端固定渲染表单
+  options: FilmConfigOption[]
 }
 
 export interface WorkspaceCharacterContent {

@@ -2,144 +2,124 @@ import { useState } from 'react'
 import { Button } from 'antd'
 import { useSSEChat } from '@/hooks/useSSEChat'
 import { useChatStore } from '@/stores/chatStore'
+import type { ChatMessage, FilmConfigContent } from '@/types/message'
 import type { FilmConfig } from '@/types/chat'
 
 interface Props {
-  message: {
-    component_id: number | null
-  }
+  message: ChatMessage
 }
 
-const RATIO_OPTIONS: { label: string; value: FilmConfig['film_ratio'] }[] = [
-  { label: '横版 16:9', value: '16:9' },
-  { label: '竖版 9:16', value: '9:16' },
-]
-
-const LANGUAGE_OPTIONS: { label: string; value: FilmConfig['dialogue_language'] }[] = [
-  { label: '中文', value: 'zh' },
-  { label: '英文', value: 'en' },
-]
-
-const IMAGE_MODEL_OPTIONS: { label: string; value: FilmConfig['image_model'] }[] = [
-  { label: 'Gemini', value: 'gemini' },
-  { label: 'GPT', value: 'gpt' },
-  { label: 'SeeDream', value: 'seedream' },
-]
-
-const VIDEO_MODEL_OPTIONS: { label: string; value: FilmConfig['video_model'] }[] = [
-  { label: 'Seedance2.0', value: 'seedance' },
-  { label: 'Sora2', value: 'sora-2' },
-  { label: 'Kling V3', value: 'kling-v3' },
-  { label: 'Vidu Q2', value: 'vidu-q2' },
-]
-
-export default function FilmConfigMessage({ message: _message }: Props) {
+export default function FilmConfigMessage({ message }: Props) {
   const { currentConversationId } = useChatStore()
   const { sendMessage } = useSSEChat()
-  const [config, setConfig] = useState<FilmConfig>({})
-  const [submitted, setSubmitted] = useState(false)
 
-  const canSubmit = config.film_ratio && config.dialogue_language && config.image_model && config.video_model
+  const content = (message.content as unknown as FilmConfigContent) ?? { options: [] }
+  const options = content.options ?? []
+
+  const [config, setConfig] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {}
+    for (const opt of options) {
+      if (opt.selected_value) {
+        initial[opt.key] = opt.selected_value
+      }
+    }
+    return initial
+  })
+
+  const [submitted, setSubmitted] = useState(() =>
+    options.length > 0 && options.every((opt) => opt.selected_value != null)
+  )
+
+  const allSelected =
+    options.length > 0 && options.every((opt) => config[opt.key])
+
+  const handleSelect = (key: string, value: string) => {
+    if (submitted) return
+    setConfig((prev) => ({ ...prev, [key]: value }))
+  }
 
   const handleConfirm = async () => {
-    if (!canSubmit || !currentConversationId) return
+    if (!allSelected || !currentConversationId) return
     setSubmitted(true)
-    await sendMessage('已配置影片参数', currentConversationId, null, undefined, config)
+    await sendMessage(
+      '已配置影片参数',
+      currentConversationId,
+      null,
+      undefined,
+      config as FilmConfig
+    )
   }
 
   if (submitted) {
     return (
-      <div className="inline-block rounded-2xl bg-gray-100 px-4 py-2 text-sm text-gray-500">
-        信息已确认
+      <div className="max-w-md rounded-2xl bg-gray-50 p-5 border border-gray-100">
+        <div className="text-sm font-medium text-gray-800 mb-3">影片配置已确认</div>
+        <div className="space-y-2">
+          {options.map((opt) => {
+            const selectedItem = opt.options.find((item) => item.value === config[opt.key])
+            return (
+              <div key={opt.key} className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">{opt.label}</span>
+                <span className="font-medium text-gray-800">
+                  {selectedItem?.label ?? config[opt.key] ?? '-'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
       </div>
     )
   }
 
+  if (options.length === 0) {
+    return <div className="text-sm text-gray-500">影片配置数据异常</div>
+  }
+
   return (
     <div className="max-w-md rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
-      <div className="text-sm text-gray-800 mb-4">请先配置影片生成参数，再选择风格。</div>
+      <div className="text-sm text-gray-800 mb-4">
+        请先配置影片生成参数，再选择风格。
+      </div>
 
       <div className="space-y-5">
-        <div>
-          <div className="text-xs font-medium text-gray-500 mb-2">影片比例</div>
-          <div className="grid grid-cols-2 gap-2">
-            {RATIO_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setConfig((prev) => ({ ...prev, film_ratio: opt.value }))}
-                className={`rounded-lg border px-3 py-2 text-sm transition ${
-                  config.film_ratio === opt.value
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                }`}
-              >
+        {options.map((opt) => {
+          const selectedValue = config[opt.key]
+          return (
+            <div key={opt.key}>
+              <div className="text-xs font-medium text-gray-500 mb-2">
                 {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-xs font-medium text-gray-500 mb-2">对白语言</div>
-          <div className="grid grid-cols-2 gap-2">
-            {LANGUAGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setConfig((prev) => ({ ...prev, dialogue_language: opt.value }))}
-                className={`rounded-lg border px-3 py-2 text-sm transition ${
-                  config.dialogue_language === opt.value
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                }`}
+              </div>
+              <div
+                className="grid gap-2"
+                style={{
+                  gridTemplateColumns: `repeat(${Math.min(opt.options.length, 3)}, minmax(0, 1fr))`,
+                }}
               >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-xs font-medium text-gray-500 mb-2">图片模型</div>
-          <div className="grid grid-cols-3 gap-2">
-            {IMAGE_MODEL_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setConfig((prev) => ({ ...prev, image_model: opt.value }))}
-                className={`rounded-lg border px-3 py-2 text-sm transition ${
-                  config.image_model === opt.value
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-xs font-medium text-gray-500 mb-2">视频模型</div>
-          <div className="grid grid-cols-2 gap-2">
-            {VIDEO_MODEL_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setConfig((prev) => ({ ...prev, video_model: opt.value }))}
-                className={`rounded-lg border px-3 py-2 text-sm transition ${
-                  config.video_model === opt.value
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
+                {opt.options.map((item) => {
+                  const selected = selectedValue === item.value
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => handleSelect(opt.key, item.value)}
+                      className={`rounded-lg border px-3 py-2 text-sm transition ${
+                        selected
+                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
 
         <Button
           type="primary"
           block
-          disabled={!canSubmit}
+          disabled={!allSelected}
           onClick={handleConfirm}
           className="!bg-indigo-600 !border-indigo-600"
         >
