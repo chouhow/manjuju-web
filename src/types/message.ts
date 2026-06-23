@@ -18,6 +18,7 @@ export type MessageType =
   | 'workspace_script'
   | 'workspace_storyboard'
   | 'workspace_all'
+  | 'heartbeat'
   | 'error'
 
 export type MessageRole = 'director' | 'character' | 'scene' | 'storyboard' | 'script'
@@ -88,6 +89,7 @@ export interface FilmConfigOption {
 }
 
 export interface FilmConfigContent {
+  confirmed: boolean
   options: FilmConfigOption[]
 }
 

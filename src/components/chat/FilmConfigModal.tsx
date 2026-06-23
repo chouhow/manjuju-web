@@ -20,12 +20,10 @@ const LANGUAGE_OPTIONS: { label: string; value: FilmConfig['dialogue_language'] 
 const IMAGE_MODEL_OPTIONS: { label: string; value: FilmConfig['image_model'] }[] = [
   { label: 'Gemini', value: 'gemini' },
   { label: 'GPT', value: 'gpt' },
-  { label: 'SeeDream', value: 'seedream' },
 ]
 
 const VIDEO_MODEL_OPTIONS: { label: string; value: FilmConfig['video_model'] }[] = [
   { label: 'Seedance2.0', value: 'seedance' },
-  { label: 'Sora2', value: 'sora-2' },
   { label: 'Kling V3', value: 'kling-v3' },
   { label: 'Vidu Q2', value: 'vidu-q2' },
 ]
