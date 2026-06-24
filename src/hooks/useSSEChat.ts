@@ -68,6 +68,9 @@ export function useSSEChat() {
         })
 
         for await (const msg of streamSSE(response)) {
+          if (msg.msg_type === 'heartbeat') {
+            continue
+          }
           if (msg.sender === 'workspace') {
             handleWorkspaceMessage(msg)
           } else {

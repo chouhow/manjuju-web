@@ -40,7 +40,7 @@ export default function ChatMessageList({ messages }: Props) {
 
   // 过滤掉不显示在聊天框的消息和重复component_id的消息
   const visibleMessages = messages.filter(
-    (msg) => msg.sender !== 'workspace' && msg.msg_type !== 'error'
+    (msg) => msg.sender !== 'workspace' && msg.msg_type !== 'error' && msg.msg_type !== 'heartbeat'
   )
 
   if (visibleMessages.length === 0) {

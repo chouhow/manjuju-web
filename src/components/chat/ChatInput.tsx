@@ -150,13 +150,14 @@ export default function ChatInput({ onSend, onStop, isLoading, isStreaming, sele
 
     const { text, references } = extractContent(editor)
 
-    // 有剧本附件时：先上传，成功后发送默认消息
+    // 有剧本附件时：先上传，成功后发送消息（优先使用用户输入，无输入时使用默认消息）
     if (pendingFile) {
       if (!currentConversationId) return
       setIsUploading(true)
       try {
         await conversationApi.uploadFile(currentConversationId, pendingFile)
-        onSend('根据剧本生成视频', references.length > 0 ? references : undefined)
+        const messageText = text.trim() ? text : '根据剧本生成视频'
+        onSend(messageText, references.length > 0 ? references : undefined)
         editor.innerHTML = ''
         setPendingFile(null)
         setIsEmpty(true)
